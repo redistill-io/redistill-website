@@ -110,6 +110,43 @@ img {
   align-items: center;
 }
 
+.github-star-widget {
+  display: flex;
+  align-items: center;
+  margin-left: 0.5rem;
+}
+
+.github-star-widget iframe {
+  border: none;
+  display: block;
+}
+
+.github-star-widget.mobile {
+  margin-left: 0;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .github-star-widget:not(.mobile) {
+    display: none;
+  }
+}
+
+@media (min-width: 769px) {
+  .github-star-widget.mobile {
+    display: none;
+  }
+}
+
+.github-button  {
+  padding: 5px 11px 3px 8px !important;
+  font-size: 14px !important;
+  line-height: 21px !important;
+  border-radius: 10px !important;
+}
+
 .nav-links a {
   font-size: 0.95rem;
   color: #374151;
@@ -236,6 +273,23 @@ img {
   background-color: #ffffff;
   border-color: #d1d5db;
   color: #111827;
+}
+
+.btn-star {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+  color: #111827;
+  gap: 0.4rem;
+}
+
+.btn-star:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.star-icon {
+  font-size: 1rem;
+  line-height: 1;
 }
 
 .hero-meta {
@@ -620,6 +674,18 @@ th {
 
 .footer-links a {
   color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.footer-links a:hover {
+  color: var(--accent);
+}
+
+.footer-links .star-icon {
+  font-size: 0.9rem;
+  line-height: 1;
 }
 
 /* Dark theme overrides */
@@ -639,6 +705,17 @@ th {
 
 :root[data-theme="dark"] .hero-stat {
   background: radial-gradient(circle at top left, #020617, #020617);
+}
+
+:root[data-theme="dark"] .btn-star {
+  background-color: #111827;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+:root[data-theme="dark"] .btn-star:hover {
+  background-color: #1f2937;
+  border-color: #4b5563;
 }
 
 :root[data-theme="dark"] .pill {
