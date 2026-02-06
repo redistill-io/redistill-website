@@ -168,5 +168,9 @@ document.addEventListener("DOMContentLoaded", function () {
   initThemeToggle();
   initDocSearch();
   initCodeCopy();
+  // Run Prism after all deferred language components have loaded
+  if (typeof Prism !== "undefined") {
+    Prism.highlightAll();
+  }
 });
 

@@ -9,6 +9,7 @@
       content="Learn about Redistill's implemented features, supported commands, security, memory management, performance optimizations, and areas intentionally left out for maximum speed."
     />
     <link rel="stylesheet" href="../assets/css/styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
   </head>
   <body class="page">
     <header class="site-header">
@@ -177,7 +178,7 @@
             <li><code>BGSAVE</code> – background snapshot that doesn&apos;t block request handling.</li>
             <li><code>LASTSAVE</code> – timestamp of last successful save.</li>
           </ul>
-          <pre><code>[persistence]
+          <pre><code class="language-toml">[persistence]
 enabled = false
 snapshot_path = "redistill.rdb"
 snapshot_interval = 300
@@ -280,6 +281,7 @@ save_on_shutdown = true</code></pre>
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-toml.min.js" defer></script>
     <script src="../assets/js/main.js"></script>
   </body>
 </html>

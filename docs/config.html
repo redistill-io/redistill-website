@@ -9,6 +9,7 @@
       content="Complete reference for configuring Redistill via redistill.toml and environment variables, including server, security, memory, logging, performance and persistence options."
     />
     <link rel="stylesheet" href="../assets/css/styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
   </head>
   <body class="page">
     <header class="site-header">
@@ -82,7 +83,7 @@
             By default, Redistill loads <code>redistill.toml</code> from the current working directory.
             You can override this with the <code>REDISTILL_CONFIG</code> environment variable:
           </p>
-          <pre><code>REDISTILL_CONFIG=/etc/redistill.toml ./redistill</code></pre>
+          <pre><code class="language-bash">REDISTILL_CONFIG=/etc/redistill.toml ./redistill</code></pre>
 
           <p>Default configuration (simplified):</p>
           <pre><code class="language-toml">[server]
@@ -301,6 +302,7 @@ level = "debug"</code></pre>
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-toml.min.js" defer></script>
     <script src="../assets/js/main.js"></script>
   </body>
