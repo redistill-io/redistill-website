@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Quick Start – Redistill</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Get Redistill running in minutes using Docker, Homebrew, direct binaries, or by building from source. Learn how to connect, run basic commands, and check health."
+    />
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+  </head>
+  <body class="page">
+    <header class="site-header">
+      <div class="container">
+        <div class="nav">
+          <a href="../index.html" class="logo">
+            <span class="logo-mark"></span>
+            <span>Redistill</span>
+          </a>
+          <nav class="nav-links" aria-label="Main">
+            <a href="../index.html">Home</a>
+            <a href="index.html" class="active">Docs</a>
+            <a href="../benchmarks.html">Benchmarks</a>
+            <a href="../roadmap.html">Roadmap</a>
+            <a href="../contact.html">Contact</a>
+          </nav>
+          <button class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+          <button class="nav-toggle" type="button" aria-label="Toggle navigation" onclick="toggleNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+        <nav id="nav-mobile" class="nav-links-mobile" aria-label="Mobile">
+          <a href="../index.html">Home</a>
+          <a href="index.html" class="active">Docs</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <div class="container">
+          <h1 class="page-title">Quick Start</h1>
+          <p class="page-lead">
+            Get Redistill running in 5 minutes using Docker, Homebrew, direct binaries, or by building from source.
+            Then connect with <code>redis-cli</code> or any Redis client and run your first commands.
+          </p>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="container">
+          <div class="toc">
+            <div class="doc-search">
+              <label class="doc-search-label" for="doc-search-input">Search this page</label>
+              <input
+                id="doc-search-input"
+                class="doc-search-input"
+                type="search"
+                placeholder="Search headings (min. 2 characters)…"
+              />
+              <ul id="doc-search-results" class="doc-search-results"></ul>
+            </div>
+            <div class="toc-title">On this page</div>
+            <ul>
+              <li><a href="#prereq">Prerequisites</a></li>
+              <li><a href="#install">Install</a></li>
+              <li><a href="#start-server">Start server</a></li>
+              <li><a href="#test-connection">Test connection</a></li>
+              <li><a href="#health">Health check &amp; monitoring</a></li>
+              <li><a href="#config">Configuration</a></li>
+              <li><a href="#next">Next steps</a></li>
+            </ul>
+          </div>
+
+          <h2 id="prereq">Prerequisites</h2>
+          <ul>
+            <li>Docker (recommended for the fastest start), or</li>
+            <li>Rust 1.70+ and Git if you plan to build from source</li>
+            <li>At least 1&nbsp;GB of free RAM</li>
+          </ul>
+
+          <h2 id="install">Install</h2>
+          <h3>Docker (recommended)</h3>
+          <p>Run Redistill with default settings on <code>127.0.0.1:6379</code>:</p>
+          <pre><code class="language-bash">docker run -d --name redistill \
+  -p 6379:6379 shahidontech/redistill:latest</code></pre>
+
+          <h3>macOS (Homebrew)</h3>
+          <pre><code class="language-bash">brew tap shaikh-shahid/redistill
+brew install redistill
+redistill</code></pre>
+
+          <h3>Linux (direct binary)</h3>
+          <pre><code class="language-bash">wget https://github.com/shaikh-shahid/redistill/releases/download/v1.1.2/redistill-1.1.2-x86_64-unknown-linux-musl.tar.gz
+tar -xzf redistill-*.tar.gz
+./redistill</code></pre>
+
+          <h3>Build from source</h3>
+          <pre><code class="language-bash"># Install Rust if needed
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.sh | sh
+
+# Clone and build
+git clone https://github.com/redistill-io/redistill.git
+cd redistill
+cargo build --release
+
+# Start the server
+./target/release/redistill</code></pre>
+
+          <h2 id="start-server">Start server</h2>
+          <h3>Without authentication</h3>
+          <pre><code class="language-bash">./target/release/redistill</code></pre>
+
+          <h3>With authentication</h3>
+          <p>Set a password via environment variable or config:</p>
+          <pre><code class="language-bash">export REDIS_PASSWORD=your_password
+./target/release/redistill</code></pre>
+
+          <p>By default, the server binds to <code>127.0.0.1:6379</code>. You can change this in <code>redistill.toml</code>.</p>
+
+          <h2 id="test-connection">Test connection</h2>
+          <p>Use <code>redis-cli</code> to send basic commands:</p>
+          <pre><code class="language-bash">redis-cli
+
+PING
+# PONG
+
+SET mykey "Hello Redistill"
+# OK
+
+GET mykey
+# "Hello Redistill"</code></pre>
+
+          <p>You can also exercise hashes:</p>
+          <pre><code class="language-bash">HSET user:1001 name "John" age "30" city "NYC"
+HGET user:1001 name
+HGETALL user:1001</code></pre>
+
+          <h3>With authentication enabled</h3>
+          <pre><code class="language-bash">redis-cli
+
+SET test "value"
+# ERR NOAUTH Authentication required
+
+AUTH your_password
+SET test "value"
+# OK</code></pre>
+
+          <h2 id="health">Health check &amp; basic monitoring</h2>
+          <p>If you have <code>health_check_port</code> configured, you can hit the HTTP health endpoint:</p>
+          <pre><code class="language-bash">curl http://localhost:8080/health
+
+{
+  "status": "ok",
+  "uptime_seconds": 120,
+  "active_connections": 2,
+  "memory_used": 1048576
+}</code></pre>
+
+          <p>To inspect server statistics via the Redis protocol:</p>
+          <pre><code class="language-bash">redis-cli INFO</code></pre>
+
+          <h2 id="config">Configuration</h2>
+          <p>Create a simple <code>redistill.toml</code> next to the binary to customize ports, auth, memory and more:</p>
+          <pre><code class="language-toml">[server]
+bind = "127.0.0.1"
+port = 6379
+health_check_port = 8080
+
+[security]
+password = "your-password"
+
+[memory]
+max_memory = 2147483648  # 2GB
+eviction_policy = "allkeys-lru"
+
+[persistence]
+enabled = false                   # Optional: enable for warm restarts
+snapshot_path = "redistill.rdb"
+snapshot_interval = 300
+save_on_shutdown = true</code></pre>
+
+          <p>Restart Redistill to apply configuration changes.</p>
+
+          <h2 id="next">Next steps</h2>
+          <ul>
+            <li>Explore the <a href="features.html">Features</a> page for a full list of supported commands.</li>
+            <li>Read the <a href="configuration.html">Configuration Reference</a> for every tuning knob.</li>
+            <li>Use the <a href="examples.html">Practical Examples</a> to wire Redistill into your application.</li>
+            <li>Review the <a href="../benchmarks.html">Benchmarks</a> and <a href="performance-tuning.html">Performance Tuning Guide</a> for production sizing.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>© <span id="year"></span> Redistill. MIT licensed, open source.</div>
+        <div class="footer-links">
+          <a href="https://github.com/redistill-io/redistill" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="index.html">Docs home</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-toml.min.js" defer></script>
+    <script src="../assets/js/main.js"></script>
+  </body>
+</html>
+

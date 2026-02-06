@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Production Deployment Guide – Redistill</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Comprehensive guide for deploying Redistill in production: configuration, deployment methods, monitoring, scaling, security hardening, and maintenance."
+    />
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"
+    />
+  </head>
+  <body class="page">
+    <header class="site-header">
+      <div class="container">
+        <div class="nav">
+          <a href="../index.html" class="logo">
+            <span class="logo-mark"></span>
+            <span>Redistill</span>
+          </a>
+          <nav class="nav-links" aria-label="Main">
+            <a href="../index.html">Home</a>
+            <a href="index.html" class="active">Docs</a>
+            <a href="../benchmarks.html">Benchmarks</a>
+            <a href="../roadmap.html">Roadmap</a>
+            <a href="../contact.html">Contact</a>
+          </nav>
+          <button class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+          <button class="nav-toggle" type="button" aria-label="Toggle navigation" onclick="toggleNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+        <nav id="nav-mobile" class="nav-links-mobile" aria-label="Mobile">
+          <a href="../index.html">Home</a>
+          <a href="index.html" class="active">Docs</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <div class="container">
+          <h1 class="page-title">Production Deployment Guide</h1>
+          <p class="page-lead">
+            This guide walks through deploying Redistill in production environments, covering configuration,
+            authentication, TLS, Docker/systemd/Kubernetes setups, monitoring, scaling, and maintenance practices.
+          </p>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="container">
+          <div class="toc">
+            <div class="doc-search">
+              <label class="doc-search-label" for="doc-search-input">Search this page</label>
+              <input
+                id="doc-search-input"
+                class="doc-search-input"
+                type="search"
+                placeholder="Search headings (min. 2 characters)…"
+              />
+              <ul id="doc-search-results" class="doc-search-results"></ul>
+            </div>
+            <div class="toc-title">On this page</div>
+            <ul>
+              <li><a href="#checklist">Pre-deployment checklist</a></li>
+              <li><a href="#essential-config">Essential configuration</a></li>
+              <li><a href="#deployment">Deployment options</a></li>
+              <li><a href="#monitoring">Monitoring &amp; alerting</a></li>
+              <li><a href="#scaling">Scaling strategies</a></li>
+              <li><a href="#persistence">Persistence &amp; cache warming</a></li>
+              <li><a href="#security">Security hardening</a></li>
+            </ul>
+          </div>
+
+          <h2 id="checklist">Pre-deployment checklist</h2>
+          <ul>
+            <li>Configure an authentication password and, if needed, TLS.</li>
+            <li>Set memory limits and eviction policy.</li>
+            <li>Define connection limits and timeouts.</li>
+            <li>Enable HTTP health checks for load balancers.</li>
+            <li>Run load tests with production-like traffic.</li>
+            <li>Set up monitoring and alerts.</li>
+            <li>Define a rollback and cache-warming strategy.</li>
+          </ul>
+
+          <h2 id="essential-config">Essential configuration</h2>
+          <h3>Authentication</h3>
+          <pre><code class="language-toml">[security]
+password = "your-secure-password"</code></pre>
+          <p>Or via environment variable:</p>
+          <pre><code class="language-bash">export REDIS_PASSWORD="your-secure-password"
+./redistill</code></pre>
+
+          <h3>Memory limits</h3>
+          <pre><code class="language-toml">[memory]
+max_memory = 2147483648  # 2GB
+eviction_policy = "allkeys-lru"</code></pre>
+
+          <h3>Connection management</h3>
+          <pre><code class="language-toml">[server]
+max_connections = 10000
+connection_rate_limit = 1000
+connection_timeout = 300</code></pre>
+
+          <h3>Health checks</h3>
+          <pre><code class="language-toml">[server]
+health_check_port = 8080</code></pre>
+          <p>Health endpoint: <code>http://&lt;host&gt;:8080/health</code></p>
+
+          <h3>TLS/SSL</h3>
+          <pre><code class="language-toml">[security]
+tls_enabled = true
+tls_cert_path = "/etc/letsencrypt/live/your-domain.com/fullchain.pem"
+tls_key_path = "/etc/letsencrypt/live/your-domain.com/privkey.pem"</code></pre>
+
+          <h2 id="deployment">Deployment options</h2>
+          <h3>Docker</h3>
+          <pre><code class="language-bash">docker run -d --name redistill \
+  -p 6379:6379 -p 8080:8080 \
+  -e REDIS_PASSWORD=$REDIS_PASSWORD \
+  -v ./redistill.toml:/etc/redistill/redistill.toml:ro \
+  shahidontech/redistill:latest</code></pre>
+
+          <h3>systemd</h3>
+          <p>Example service file:</p>
+          <pre><code class="language-ini">[Unit]
+Description=Redistill Cache Server
+After=network-online.target
+
+[Service]
+Type=simple
+User=redistill
+WorkingDirectory=/opt/redistill
+EnvironmentFile=/etc/redistill/environment
+ExecStart=/opt/redistill/redistill
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+
+          <h3>Kubernetes</h3>
+          <p>Run Redistill as a Deployment with a <code>ClusterIP</code> Service and HTTP health probes:</p>
+          <pre><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redistill
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: redistill
+  template:
+    metadata:
+      labels:
+        app: redistill
+    spec:
+      containers:
+      - name: redistill
+        image: your-registry/redistill:latest
+        ports:
+        - containerPort: 6379
+        - containerPort: 8080
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redistill-secret
+              key: password
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080</code></pre>
+
+          <h2 id="monitoring">Monitoring &amp; alerting</h2>
+          <p>Key metrics to track:</p>
+          <ul>
+            <li><strong>Memory:</strong> <code>used_memory</code> vs <code>max_memory</code></li>
+            <li><strong>Evictions:</strong> <code>evicted_keys</code> rate</li>
+            <li><strong>Connections:</strong> <code>active_connections</code>, <code>rejected_connections</code></li>
+            <li><strong>Throughput:</strong> <code>total_commands</code> over time</li>
+          </ul>
+          <p>All of these are exposed via <code>INFO</code> and the health endpoint.</p>
+
+          <h2 id="scaling">Scaling strategies</h2>
+          <h3>Vertical scaling</h3>
+          <ul>
+            <li>Add more CPU cores and RAM.</li>
+            <li>Increase <code>num_shards</code> to match CPU count.</li>
+          </ul>
+
+          <h3>Horizontal scaling</h3>
+          <ul>
+            <li>Client-side sharding with consistent hashing.</li>
+            <li>Proxy-based sharding using Twemproxy, Envoy or HAProxy.</li>
+            <li>DNS round-robin for simple read-heavy workloads.</li>
+          </ul>
+
+          <h2 id="persistence">Persistence &amp; cache warming</h2>
+          <p>
+            By default, persistence is disabled for maximum performance and Redistill behaves like a pure cache.
+            When enabling snapshots, be aware that data between snapshots can be lost on crash.
+          </p>
+          <ul>
+            <li>Use cache warming to pre-load the most important keys on startup.</li>
+            <li>Ensure your application has a well-defined fallback to the primary data store on cache miss.</li>
+          </ul>
+
+          <h2 id="security">Security hardening</h2>
+          <ul>
+            <li>Run Redistill under a dedicated system user with restricted filesystem permissions.</li>
+            <li>Bind to private networks and use firewalls/security groups to limit access.</li>
+            <li>Enable TLS for external traffic and rotate credentials regularly.</li>
+            <li>Monitor authentication failures and connection rejections as part of your security posture.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>© <span id="year"></span> Redistill. MIT licensed, open source.</div>
+        <div class="footer-links">
+          <a href="https://github.com/redistill-io/redistill" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="index.html">Docs home</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-toml.min.js" defer></script>
+    <script src="../assets/js/main.js"></script>
+  </body>
+</html>
+

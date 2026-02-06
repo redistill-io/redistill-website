@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Architecture &amp; Design – Redistill</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Understand the design philosophy and architecture behind Redistill: performance-first, multi-threaded, lock-free reads, sharded storage, and optional persistence."
+    />
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+  </head>
+  <body class="page">
+    <header class="site-header">
+      <div class="container">
+        <div class="nav">
+          <a href="../index.html" class="logo">
+            <span class="logo-mark"></span>
+            <span>Redistill</span>
+          </a>
+          <nav class="nav-links" aria-label="Main">
+            <a href="../index.html">Home</a>
+            <a href="index.html" class="active">Docs</a>
+            <a href="../benchmarks.html">Benchmarks</a>
+            <a href="../roadmap.html">Roadmap</a>
+            <a href="../contact.html">Contact</a>
+          </nav>
+          <button class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+          <button class="nav-toggle" type="button" aria-label="Toggle navigation" onclick="toggleNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+        <nav id="nav-mobile" class="nav-links-mobile" aria-label="Mobile">
+          <a href="../index.html">Home</a>
+          <a href="index.html" class="active">Docs</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <div class="container">
+          <h1 class="page-title">Architecture &amp; Design Philosophy</h1>
+          <p class="page-lead">
+            Redistill is built around a simple idea: performance first, optional persistence. This page summarizes how
+            the architecture delivers high throughput and low latency while remaining Redis-compatible.
+          </p>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="container">
+          <div class="toc">
+            <div class="doc-search">
+              <label class="doc-search-label" for="doc-search-input">Search this page</label>
+              <input
+                id="doc-search-input"
+                class="doc-search-input"
+                type="search"
+                placeholder="Search headings (min. 2 characters)…"
+              />
+              <ul id="doc-search-results" class="doc-search-results"></ul>
+            </div>
+            <div class="toc-title">On this page</div>
+            <ul>
+              <li><a href="#design">Design philosophy</a></li>
+              <li><a href="#overview">High-level architecture</a></li>
+              <li><a href="#optimizations">Performance optimizations</a></li>
+              <li><a href="#tradeoffs">Trade-offs</a></li>
+              <li><a href="#usecases">Use cases</a></li>
+              <li><a href="#when-to-use">When to use Redistill vs Redis</a></li>
+            </ul>
+          </div>
+
+          <h2 id="design">Design philosophy</h2>
+          <p>Core principles behind Redistill:</p>
+          <ul>
+            <li><strong>Optional persistence</strong> – no disk I/O on the hot path by default; snapshots only when you opt in.</li>
+            <li><strong>Multi-threaded</strong> – utilize all CPU cores rather than a single event loop thread.</li>
+            <li><strong>Lock-free reads</strong> – concurrent GETs without global locks via a sharded DashMap.</li>
+            <li><strong>Zero-copy</strong> – use reference-counted buffers for values to avoid copying on reads.</li>
+            <li><strong>Production-ready</strong> – authentication, TLS, monitoring and health checks built in.</li>
+          </ul>
+
+          <h2 id="overview">High-level architecture</h2>
+          <p>
+            Redistill is implemented in Rust, using the Tokio async runtime and DashMap for the in-memory store. The key
+            components are:
+          </p>
+          <ul>
+            <li>A multi-threaded Tokio runtime for accepting connections and handling commands.</li>
+            <li>A sharded, concurrent hash map (DashMap) used as the primary key-value store.</li>
+            <li>A RESP protocol parser and command dispatcher compatible with Redis clients.</li>
+            <li>Optional snapshot persistence layer that runs in the background when enabled.</li>
+          </ul>
+
+          <p>
+            The upstream documentation includes an architecture diagram. To reuse it here, copy
+            <code>Redistill_Architecture.png</code> from the main project&apos;s <code>docs/img/</code> into this site&apos;s
+            <code>assets/img/</code> directory.
+          </p>
+          <figure class="chart-card" style="margin-top: 1rem; max-width: 640px">
+            <img src="../assets/img/Redistill_Architecture.png" alt="Redistill architecture diagram" />
+          </figure>
+
+          <h2 id="optimizations">Performance optimizations</h2>
+          <h3>1. Optional persistence</h3>
+          <p>
+            Redis combines AOF and RDB by default, incurring write amplification and fsync overhead. Redistill disables
+            persistence by default, eliminating disk I/O from the hot path. When you enable snapshots, they run in the
+            background and do not block GET/SET handling.
+          </p>
+
+          <h3>2. Multi-threaded command processing</h3>
+          <p>
+            Instead of a single-threaded event loop, Redistill uses Tokio&apos;s multi-threaded scheduler and work-stealing
+            to distribute connections and commands across cores. This improves throughput under high concurrency.
+          </p>
+
+          <h3>3. Sharded store &amp; lock-free reads</h3>
+          <p>
+            The in-memory store is a DashMap with many shards (2048 recommended, 4096 for GET-heavy workloads). Reads
+            acquire shard-local locks with minimal contention and can proceed concurrently across shards.
+          </p>
+
+          <h3>4. Zero-copy buffers</h3>
+          <p>
+            Values are stored using <code>Bytes</code>, a reference-counted buffer type. Cloning a value for a read does
+            not copy the underlying bytes, improving memory efficiency and cache locality.
+          </p>
+
+          <h3>5. Batched writes &amp; probabilistic LRU</h3>
+          <p>
+            Redistill batches operations internally and uses probabilistic LRU updates to reduce atomic overhead:
+          </p>
+          <ul>
+            <li>Atomic counters are updated in batches instead of per-operation.</li>
+            <li>LRU timestamps are updated probabilistically (e.g., 10% of the time), which is sufficient for eviction decisions.</li>
+          </ul>
+
+          <h2 id="tradeoffs">Trade-offs</h2>
+          <h3>What you gain</h3>
+          <ul>
+            <li>4.5× higher single-instance throughput compared to Redis.</li>
+            <li>5× lower p50 latency in benchmarks.</li>
+            <li>Excellent scaling with read-heavy and pipelined workloads.</li>
+            <li>Lower infrastructure costs thanks to fewer required instances.</li>
+          </ul>
+
+          <h3>What you trade off</h3>
+          <ul>
+            <li>No real-time durability (no AOF/write-ahead logging).</li>
+            <li>No built-in replication or clustering (client-side sharding recommended today).</li>
+            <li>No advanced data structures like lists, sets, sorted sets, streams, or modules.</li>
+            <li>Not suitable as a primary system of record or for financial/transactional data.</li>
+          </ul>
+
+          <h2 id="usecases">Use cases</h2>
+          <h3>Where Redistill excels</h3>
+          <ul>
+            <li>Read-heavy workloads (70–90%+ GETs).</li>
+            <li>Pipelined traffic with depths of 16–128.</li>
+            <li>Session storage, API response caching, feature flags, rate limiting, and leaderboards.</li>
+            <li>Ephemeral or regenerable data where small amounts of loss on restart are acceptable.</li>
+          </ul>
+
+          <h3>Not recommended for</h3>
+          <ul>
+            <li>Primary, durable data storage.</li>
+            <li>Workloads requiring replication or multi-DC failover out of the box.</li>
+            <li>Highly stateful, write-heavy transactional systems.</li>
+          </ul>
+
+          <h2 id="when-to-use">When to use Redistill vs Redis</h2>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Requirement</th>
+                  <th>Redistill</th>
+                  <th>Redis</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Maximum single-instance throughput</td>
+                  <td><strong>Best choice</strong> (≈9.07M ops/s)</td>
+                  <td>Slower (≈2.03M ops/s)</td>
+                </tr>
+                <tr>
+                  <td>Clustered, horizontally scaled throughput</td>
+                  <td>Manual or proxy-based sharding</td>
+                  <td>Redis Cluster built in</td>
+                </tr>
+                <tr>
+                  <td>Strict durability &amp; replication</td>
+                  <td>Snapshot-only (optional)</td>
+                  <td>AOF, RDB, replication</td>
+                </tr>
+                <tr>
+                  <td>Rich data structures</td>
+                  <td>Strings, counters, hashes</td>
+                  <td>Lists, sets, sorted sets, streams, etc.</td>
+                </tr>
+                <tr>
+                  <td>High-performance cache with optional warm restarts</td>
+                  <td><strong>Excellent fit</strong></td>
+                  <td>Good fit but lower per-instance performance</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>© <span id="year"></span> Redistill. MIT licensed, open source.</div>
+        <div class="footer-links">
+          <a href="https://github.com/redistill-io/redistill" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="index.html">Docs home</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
+    <script src="../assets/js/main.js"></script>
+  </body>
+</html>
+

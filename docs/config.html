@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Configuration Reference – Redistill</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Complete reference for configuring Redistill via redistill.toml and environment variables, including server, security, memory, logging, performance and persistence options."
+    />
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+  </head>
+  <body class="page">
+    <header class="site-header">
+      <div class="container">
+        <div class="nav">
+          <a href="../index.html" class="logo">
+            <span class="logo-mark"></span>
+            <span>Redistill</span>
+          </a>
+          <nav class="nav-links" aria-label="Main">
+            <a href="../index.html">Home</a>
+            <a href="index.html" class="active">Docs</a>
+            <a href="../benchmarks.html">Benchmarks</a>
+            <a href="../roadmap.html">Roadmap</a>
+            <a href="../contact.html">Contact</a>
+          </nav>
+          <button class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+          <button class="nav-toggle" type="button" aria-label="Toggle navigation" onclick="toggleNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+        <nav id="nav-mobile" class="nav-links-mobile" aria-label="Mobile">
+          <a href="../index.html">Home</a>
+          <a href="index.html" class="active">Docs</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <div class="container">
+          <h1 class="page-title">Configuration Reference</h1>
+          <p class="page-lead">
+            Redistill reads configuration from <code>redistill.toml</code> and environment variables. This page outlines
+            all options for server behavior, security, memory, logging, performance and persistence.
+          </p>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="container">
+          <div class="toc">
+            <div class="doc-search">
+              <label class="doc-search-label" for="doc-search-input">Search this page</label>
+              <input
+                id="doc-search-input"
+                class="doc-search-input"
+                type="search"
+                placeholder="Search headings (min. 2 characters)…"
+              />
+              <ul id="doc-search-results" class="doc-search-results"></ul>
+            </div>
+            <div class="toc-title">On this page</div>
+            <ul>
+              <li><a href="#file">Config file</a></li>
+              <li><a href="#sections">Configuration sections</a></li>
+              <li><a href="#env">Environment variables</a></li>
+              <li><a href="#examples">Example configurations</a></li>
+              <li><a href="#tuning">Tuning highlights</a></li>
+              <li><a href="#troubleshooting">Troubleshooting</a></li>
+            </ul>
+          </div>
+
+          <h2 id="file">Configuration file</h2>
+          <p>
+            By default, Redistill loads <code>redistill.toml</code> from the current working directory.
+            You can override this with the <code>REDISTILL_CONFIG</code> environment variable:
+          </p>
+          <pre><code>REDISTILL_CONFIG=/etc/redistill.toml ./redistill</code></pre>
+
+          <p>Default configuration (simplified):</p>
+          <pre><code class="language-toml">[server]
+bind = "127.0.0.1"
+port = 6379
+num_shards = 256
+batch_size = 16
+buffer_size = 16384
+buffer_pool_size = 1024
+max_connections = 10000
+connection_timeout = 300
+connection_rate_limit = 0
+health_check_port = 0
+
+[security]
+password = ""
+tls_enabled = false
+tls_cert_path = ""
+tls_key_path = ""
+
+[memory]
+max_memory = 0
+eviction_policy = "allkeys-lru"
+eviction_sample_size = 5
+
+[logging]
+level = "info"
+format = "text"
+
+[performance]
+tcp_nodelay = true
+tcp_keepalive = 60
+
+[persistence]
+enabled = false
+snapshot_path = "redistill.rdb"
+snapshot_interval = 300
+save_on_shutdown = true</code></pre>
+
+          <h2 id="sections">Configuration sections</h2>
+          <h3>[server]</h3>
+          <ul>
+            <li><strong>bind</strong> – interface to bind (e.g. <code>"127.0.0.1"</code>, <code>"0.0.0.0"</code>).</li>
+            <li><strong>port</strong> – Redis TCP port (default: 6379).</li>
+            <li><strong>num_shards</strong> – number of internal shards for the in-memory store; powers of two recommended.</li>
+            <li><strong>batch_size</strong> – commands batched before flushing to the network.</li>
+            <li><strong>buffer_size</strong> – per-connection buffer size in bytes.</li>
+            <li><strong>buffer_pool_size</strong> – number of pre-allocated buffers.</li>
+            <li><strong>max_connections</strong> – maximum concurrent connections (0 = unlimited).</li>
+            <li><strong>connection_timeout</strong> – idle connection timeout in seconds (0 = no timeout).</li>
+            <li><strong>connection_rate_limit</strong> – maximum new connections per second (0 = unlimited).</li>
+            <li><strong>health_check_port</strong> – HTTP health endpoint port (0 = disabled).</li>
+          </ul>
+
+          <h3>[security]</h3>
+          <ul>
+            <li><strong>password</strong> – password required for <code>AUTH</code> (empty = no authentication).</li>
+            <li><strong>tls_enabled</strong> – enable TLS/SSL using Rustls.</li>
+            <li><strong>tls_cert_path</strong>, <strong>tls_key_path</strong> – certificate and key files in PEM format.</li>
+          </ul>
+
+          <h3>[memory]</h3>
+          <ul>
+            <li><strong>max_memory</strong> – maximum memory usage in bytes (0 = unlimited).</li>
+            <li><strong>eviction_policy</strong> – <code>allkeys-lru</code>, <code>allkeys-random</code>, <code>allkeys-s3fifo</code>, or <code>noeviction</code>.</li>
+            <li><strong>eviction_sample_size</strong> – number of keys sampled when choosing eviction candidates.</li>
+          </ul>
+
+          <h3>[logging]</h3>
+          <ul>
+            <li><strong>level</strong> – <code>error</code>, <code>warn</code>, <code>info</code>, <code>debug</code>, <code>trace</code>.</li>
+            <li><strong>format</strong> – <code>text</code> or <code>json</code>.</li>
+          </ul>
+
+          <h3>[performance]</h3>
+          <ul>
+            <li><strong>tcp_nodelay</strong> – disable Nagle&apos;s algorithm for lower latency.</li>
+            <li><strong>tcp_keepalive</strong> – TCP keepalive interval in seconds (0 = disabled).</li>
+          </ul>
+
+          <h3>[persistence]</h3>
+          <ul>
+            <li><strong>enabled</strong> – enable snapshot-based persistence (default: <code>false</code>).</li>
+            <li><strong>snapshot_path</strong> – path to snapshot file (e.g. <code>"redistill.rdb"</code>).</li>
+            <li><strong>snapshot_interval</strong> – auto-save interval in seconds (0 = disabled).</li>
+            <li><strong>save_on_shutdown</strong> – save snapshot on graceful shutdown.</li>
+          </ul>
+
+          <h2 id="env">Environment variables</h2>
+          <p>Environment variables override <code>redistill.toml</code> settings. Common ones include:</p>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Overrides</th>
+                  <th>Example</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>REDISTILL_CONFIG</code></td>
+                  <td>Config file path</td>
+                  <td><code>REDISTILL_CONFIG=/etc/redistill.toml</code></td>
+                </tr>
+                <tr>
+                  <td><code>REDIS_PASSWORD</code></td>
+                  <td><code>security.password</code></td>
+                  <td><code>REDIS_PASSWORD=secret</code></td>
+                </tr>
+                <tr>
+                  <td><code>REDIS_PORT</code></td>
+                  <td><code>server.port</code></td>
+                  <td><code>REDIS_PORT=6380</code></td>
+                </tr>
+                <tr>
+                  <td><code>REDIS_BIND</code></td>
+                  <td><code>server.bind</code></td>
+                  <td><code>REDIS_BIND=0.0.0.0</code></td>
+                </tr>
+                <tr>
+                  <td><code>REDIS_MAX_MEMORY</code></td>
+                  <td><code>memory.max_memory</code></td>
+                  <td><code>REDIS_MAX_MEMORY=2147483648</code></td>
+                </tr>
+                <tr>
+                  <td><code>REDIS_EVICTION_POLICY</code></td>
+                  <td><code>memory.eviction_policy</code></td>
+                  <td><code>REDIS_EVICTION_POLICY=allkeys-lru</code></td>
+                </tr>
+                <tr>
+                  <td><code>REDIS_PERSISTENCE_ENABLED</code></td>
+                  <td><code>persistence.enabled</code></td>
+                  <td><code>REDIS_PERSISTENCE_ENABLED=true</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2 id="examples">Example configurations</h2>
+          <h3>Production high-performance</h3>
+          <pre><code class="language-toml">[server]
+bind = "0.0.0.0"
+port = 6379
+num_shards = 512
+batch_size = 32
+max_connections = 50000
+connection_rate_limit = 5000
+health_check_port = 8080
+
+[security]
+password = "your_secure_password"
+tls_enabled = true
+tls_cert_path = "/etc/letsencrypt/live/domain.com/fullchain.pem"
+tls_key_path = "/etc/letsencrypt/live/domain.com/privkey.pem"
+
+[memory]
+max_memory = 8589934592  # 8GB
+eviction_policy = "allkeys-lru"
+
+[performance]
+tcp_nodelay = true
+tcp_keepalive = 120
+
+[persistence]
+enabled = true
+snapshot_path = "/data/redistill.rdb"
+snapshot_interval = 300
+save_on_shutdown = true</code></pre>
+
+          <h3>Development</h3>
+          <pre><code class="language-toml">[server]
+bind = "127.0.0.1"
+port = 6379
+num_shards = 64
+
+[security]
+password = ""  # no auth for local dev
+
+[memory]
+max_memory = 1073741824  # 1GB
+
+[logging]
+level = "debug"</code></pre>
+
+          <h2 id="tuning">Tuning highlights</h2>
+          <ul>
+            <li><strong>num_shards</strong> – increase for high concurrency (2048+), decrease to save memory.</li>
+            <li><strong>batch_size</strong> – smaller for low-latency interactive workloads, larger (matching pipeline depth) for throughput.</li>
+            <li><strong>max_memory</strong> – set to ~75–80% of host RAM after accounting for OS and other processes.</li>
+            <li><strong>eviction_policy</strong> – <code>allkeys-lru</code> for general caches, <code>noeviction</code> when you prefer errors over eviction.</li>
+          </ul>
+
+          <h2 id="troubleshooting">Troubleshooting</h2>
+          <ul>
+            <li><strong>Port in use</strong> – adjust <code>server.port</code> or free the existing port.</li>
+            <li><strong>Invalid bind address</strong> – confirm you are using a valid IP/hostname.</li>
+            <li><strong>TLS failures</strong> – check <code>tls_cert_path</code> and <code>tls_key_path</code> and verify they are readable.</li>
+            <li><strong>High memory usage</strong> – ensure <code>max_memory</code> and an eviction policy are set; monitor via <code>INFO</code>.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>© <span id="year"></span> Redistill. MIT licensed, open source.</div>
+        <div class="footer-links">
+          <a href="https://github.com/redistill-io/redistill" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="index.html">Docs home</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-toml.min.js" defer></script>
+    <script src="../assets/js/main.js"></script>
+  </body>
+</html>
+

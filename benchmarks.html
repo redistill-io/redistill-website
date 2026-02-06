@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Benchmarks – Redistill vs Redis &amp; Dragonfly</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Competitive benchmarks showing Redistill performance versus Redis and Dragonfly on modern AWS c7i instances, including throughput, latency, bandwidth and methodology."
+    />
+    <link rel="stylesheet" href="assets/css/styles.css" />
+  </head>
+  <body class="page">
+    <header class="site-header">
+      <div class="container">
+        <div class="nav">
+          <a href="index.html" class="logo">
+            <span class="logo-mark"></span>
+            <span>Redistill</span>
+          </a>
+          <nav class="nav-links" aria-label="Main">
+            <a href="index.html">Home</a>
+            <a href="docs/index.html">Docs</a>
+            <a href="benchmarks.html" class="active">Benchmarks</a>
+            <a href="roadmap.html">Roadmap</a>
+            <a href="contact.html">Contact</a>
+          </nav>
+          <button class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+          <button class="nav-toggle" type="button" aria-label="Toggle navigation" onclick="toggleNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+        <nav id="nav-mobile" class="nav-links-mobile" aria-label="Mobile">
+          <a href="index.html">Home</a>
+          <a href="docs/index.html">Docs</a>
+          <a href="benchmarks.html" class="active">Benchmarks</a>
+          <a href="roadmap.html">Roadmap</a>
+          <a href="contact.html">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <div class="container">
+          <h1 class="page-title">Benchmarks</h1>
+          <p class="page-lead">
+            Redistill is tuned for single-instance performance, achieving up to 9.07M operations per second with
+            sub-0.5&nbsp;ms p50 latency, while remaining fully compatible with Redis clients.
+          </p>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="container">
+          <div class="benchmark-metric-grid">
+            <div class="benchmark-metric">
+              <div class="benchmark-label">Throughput (c7i.16xlarge)</div>
+              <div class="benchmark-value">9.07M ops/s</div>
+              <div class="benchmark-caption">4.5× Redis, 1.7× Dragonfly</div>
+            </div>
+            <div class="benchmark-metric">
+              <div class="benchmark-label">Latency p50</div>
+              <div class="benchmark-value">0.479&nbsp;ms</div>
+              <div class="benchmark-caption">5.0× faster than Redis</div>
+            </div>
+            <div class="benchmark-metric">
+              <div class="benchmark-label">Bandwidth</div>
+              <div class="benchmark-value">1.58&nbsp;GB/s</div>
+              <div class="benchmark-caption">4.7× Redis, 1.7× Dragonfly</div>
+            </div>
+          </div>
+
+          <section>
+            <h2 id="summary">Quick summary</h2>
+            <p>
+              On an AWS c7i.16xlarge instance (64 vCPUs, 128&nbsp;GB RAM), Redistill outperforms both Redis and
+              Dragonfly in a 1:1 mixed <code>SET:GET</code> workload using <code>memtier_benchmark</code>.
+            </p>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Metric</th>
+                    <th>Redistill</th>
+                    <th>Dragonfly</th>
+                    <th>Redis</th>
+                    <th>vs Redis</th>
+                    <th>vs Dragonfly</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Throughput</strong></td>
+                    <td>9.07M ops/s</td>
+                    <td>5.43M ops/s</td>
+                    <td>2.03M ops/s</td>
+                    <td><strong>4.5×</strong></td>
+                    <td><strong>1.7×</strong></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Bandwidth</strong></td>
+                    <td>1.58&nbsp;GB/s</td>
+                    <td>923&nbsp;MB/s</td>
+                    <td>337&nbsp;MB/s</td>
+                    <td><strong>4.7×</strong></td>
+                    <td><strong>1.7×</strong></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Avg latency</strong></td>
+                    <td>0.524&nbsp;ms</td>
+                    <td>0.877&nbsp;ms</td>
+                    <td>2.000&nbsp;ms</td>
+                    <td><strong>3.8× faster</strong></td>
+                    <td><strong>1.7× faster</strong></td>
+                  </tr>
+                  <tr>
+                    <td><strong>p50 latency</strong></td>
+                    <td>0.479&nbsp;ms</td>
+                    <td>0.807&nbsp;ms</td>
+                    <td>2.383&nbsp;ms</td>
+                    <td><strong>5.0× faster</strong></td>
+                    <td><strong>1.7× faster</strong></td>
+                  </tr>
+                  <tr>
+                    <td><strong>p99 latency</strong></td>
+                    <td>1.215&nbsp;ms</td>
+                    <td>1.975&nbsp;ms</td>
+                    <td>2.959&nbsp;ms</td>
+                    <td><strong>2.4× faster</strong></td>
+                    <td><strong>1.2× faster</strong></td>
+                  </tr>
+                  <tr>
+                    <td><strong>p99.9 latency</strong></td>
+                    <td>1.591&nbsp;ms</td>
+                    <td>2.559&nbsp;ms</td>
+                    <td>4.159&nbsp;ms</td>
+                    <td><strong>2.6× faster</strong></td>
+                    <td><strong>1.6× faster</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              Redistill processed 544M total operations in this test (2.7× more than Dragonfly, 4.5× more than Redis)
+              with consistently lower tail latency and no errors across all systems.
+            </p>
+          </section>
+
+          <section>
+            <h2 id="visuals">Throughput, latency and bandwidth</h2>
+            <p>
+              The upstream documentation includes simple visualizations of the competitive benchmark.
+              To reuse those charts, copy the images from the main project
+              <code>docs/img/</code> directory into this site&apos;s <code>assets/img/</code> directory:
+              <code>throughput.png</code>, <code>latency.png</code>, and <code>bandwidth.png</code>.
+            </p>
+            <div class="charts-grid">
+              <figure class="chart-card">
+                <h3>Throughput comparison (higher is better)</h3>
+                <img src="assets/img/throughput.png" alt="Throughput comparison: Redistill vs Dragonfly vs Redis" />
+              </figure>
+              <figure class="chart-card">
+                <h3>Latency p50 (lower is better)</h3>
+                <img src="assets/img/latency.png" alt="Latency p50 comparison: Redistill vs Dragonfly vs Redis" />
+              </figure>
+              <figure class="chart-card">
+                <h3>Bandwidth comparison (higher is better)</h3>
+                <img src="assets/img/bandwidth.png" alt="Bandwidth comparison: Redistill vs Dragonfly vs Redis" />
+              </figure>
+            </div>
+          </section>
+
+          <section>
+            <h2 id="c7i8xlarge">Detailed results (c7i.8xlarge)</h2>
+            <p>
+              On a slightly smaller AWS c7i.8xlarge (32 vCPUs, 64&nbsp;GB RAM) using <code>redis-benchmark</code>, Redistill
+              matches or beats Redis across all workloads, with especially strong gains on read-heavy tests.
+            </p>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Workload</th>
+                    <th>Redistill</th>
+                    <th>Redis</th>
+                    <th>Improvement</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Interactive (-c 1, -P 1)</td>
+                    <td>39K ops/s</td>
+                    <td>39K ops/s</td>
+                    <td>Similar</td>
+                  </tr>
+                  <tr>
+                    <td>Production SET (-c 50, -P 16)</td>
+                    <td>2.08M ops/s</td>
+                    <td>1.69M ops/s</td>
+                    <td><strong>+23%</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Production GET (-c 50, -P 16)</td>
+                    <td>2.05M ops/s</td>
+                    <td>1.94M ops/s</td>
+                    <td><strong>+6%</strong></td>
+                  </tr>
+                  <tr>
+                    <td>High concurrency SET (-c 300, -P 32)</td>
+                    <td>2.67M ops/s</td>
+                    <td>2.23M ops/s</td>
+                    <td><strong>+20%</strong></td>
+                  </tr>
+                  <tr>
+                    <td>High concurrency GET (-c 300, -P 32)</td>
+                    <td>3.47M ops/s</td>
+                    <td>2.71M ops/s</td>
+                    <td><strong>+28%</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Extreme SET (-c 100, -P 64)</td>
+                    <td>2.72M ops/s</td>
+                    <td>2.58M ops/s</td>
+                    <td><strong>+5%</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Extreme GET (-c 100, -P 64)</td>
+                    <td>5.32M ops/s</td>
+                    <td>3.06M ops/s</td>
+                    <td><strong>+74%</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Ultra SET (-c 500, -P 128)</td>
+                    <td>2.74M ops/s</td>
+                    <td>2.74M ops/s</td>
+                    <td><strong>Equal</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Ultra GET (-c 500, -P 128)</td>
+                    <td>6.87M ops/s</td>
+                    <td>3.47M ops/s</td>
+                    <td><strong>+98%</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              Redistill was tuned with 2048 shards, batch size 256, and buffer pool size 2048 – the recommended
+              configuration for balanced workloads described in the Performance Tuning Guide.
+            </p>
+          </section>
+
+          <section>
+            <h2 id="methodology">Benchmark methodology</h2>
+            <div class="toc">
+              <div class="toc-title">On this page</div>
+              <ul>
+                <li><a href="#summary">Quick summary</a></li>
+                <li><a href="#visuals">Visual comparisons</a></li>
+                <li><a href="#c7i8xlarge">Detailed results</a></li>
+                <li><a href="#methodology">Benchmark methodology</a></li>
+              </ul>
+            </div>
+            <h3>Hardware</h3>
+            <ul>
+              <li>
+                <strong>AWS c7i.16xlarge</strong> – Intel Xeon (4th Gen Sapphire Rapids), 64 vCPUs, 128&nbsp;GB RAM, up to
+                50&nbsp;Gbps network
+              </li>
+              <li>
+                <strong>AWS c7i.8xlarge</strong> – Intel Xeon (4th Gen Sapphire Rapids), 32 vCPUs, 64&nbsp;GB RAM, up to
+                12.5&nbsp;Gbps network
+              </li>
+            </ul>
+            <h3>Software</h3>
+            <ul>
+              <li>Redis 7.0.x (latest stable)</li>
+              <li>Dragonfly (latest stable)</li>
+              <li>Redistill v1.1.2</li>
+              <li><code>memtier_benchmark</code> and <code>redis-benchmark</code> from Redis 7</li>
+            </ul>
+            <h3>memtier_benchmark configuration (c7i.16xlarge)</h3>
+            <pre><code class="language-bash">memtier_benchmark \
+  --server=localhost \
+  --port=6379 \
+  --protocol=redis \
+  --threads=8 \
+  --clients=20 \
+  --pipeline=30 \
+  --data-size=256 \
+  --ratio=1:1 \
+  --test-time=60 \
+  --key-pattern=R:R</code></pre>
+            <h3>redis-benchmark configuration (c7i.8xlarge)</h3>
+            <pre><code class="language-bash"># Production workload example
+redis-benchmark -t set,get -n 1000000 -c 50 -P 16 -q
+
+# Extreme workload example
+redis-benchmark -t set,get -n 1000000 -c 100 -P 64 -q
+
+# Ultra workload example
+redis-benchmark -t set,get -n 1000000 -c 500 -P 128 -q</code></pre>
+            <p>
+              All systems were configured as close as possible, with persistence disabled for a fair comparison with
+              Redistill&apos;s default (no persistence). Full raw results are available in the upstream repository under
+              <code>tests/benchmarks/benchmark_results_memtier/</code>.
+            </p>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>© <span id="year"></span> Redistill. MIT licensed, open source.</div>
+        <div class="footer-links">
+          <a href="https://github.com/redistill-io/redistill" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="docs/index.html">Docs</a>
+          <a href="benchmarks.html">Benchmarks</a>
+          <a href="roadmap.html">Roadmap</a>
+          <a href="contact.html">Contact</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js" defer></script>
+    <script src="assets/js/main.js"></script>
+  </body>
+</html>
+

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>TLS / SSL – Redistill</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Summary of Redistill's TLS/SSL implementation, configuration, development and production workflows, and planned future enhancements like mTLS and certificate reloading."
+    />
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"
+    />
+  </head>
+  <body class="page">
+    <header class="site-header">
+      <div class="container">
+        <div class="nav">
+          <a href="../index.html" class="logo">
+            <span class="logo-mark"></span>
+            <span>Redistill</span>
+          </a>
+          <nav class="nav-links" aria-label="Main">
+            <a href="../index.html">Home</a>
+            <a href="index.html" class="active">Docs</a>
+            <a href="../benchmarks.html">Benchmarks</a>
+            <a href="../roadmap.html">Roadmap</a>
+            <a href="../contact.html">Contact</a>
+          </nav>
+          <button class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+          <button class="nav-toggle" type="button" aria-label="Toggle navigation" onclick="toggleNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+        <nav id="nav-mobile" class="nav-links-mobile" aria-label="Mobile">
+          <a href="../index.html">Home</a>
+          <a href="index.html" class="active">Docs</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <div class="container">
+          <h1 class="page-title">TLS / SSL</h1>
+          <p class="page-lead">
+            Redistill supports TLS/SSL transport encryption based on Rustls, allowing you to secure traffic from clients
+            to the cache server with minimal overhead.
+          </p>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="container">
+          <div class="toc">
+            <div class="doc-search">
+              <label class="doc-search-label" for="doc-search-input">Search this page</label>
+              <input
+                id="doc-search-input"
+                class="doc-search-input"
+                type="search"
+                placeholder="Search headings (min. 2 characters)…"
+              />
+              <ul id="doc-search-results" class="doc-search-results"></ul>
+            </div>
+            <div class="toc-title">On this page</div>
+            <ul>
+              <li><a href="#overview">Overview</a></li>
+              <li><a href="#config">Configuration</a></li>
+              <li><a href="#dev">Development workflow</a></li>
+              <li><a href="#prod">Production workflow</a></li>
+              <li><a href="#future">Future enhancements</a></li>
+            </ul>
+          </div>
+
+          <h2 id="overview">Overview</h2>
+          <ul>
+            <li>Implemented using <strong>tokio-rustls</strong> and <strong>rustls-pemfile</strong>.</li>
+            <li>Supports TLS&nbsp;1.3 with TLS&nbsp;1.2 fallback; no OpenSSL dependency.</li>
+            <li>Uses a unified stream type that wraps either plain TCP or a TLS stream.</li>
+            <li>When TLS is disabled, there is essentially zero overhead vs plain TCP.</li>
+          </ul>
+
+          <h2 id="config">Configuration</h2>
+          <p>In <code>redistill.toml</code>:</p>
+          <pre><code class="language-toml">[security]
+tls_enabled = true
+tls_cert_path = "path/to/server-cert.pem"
+tls_key_path  = "path/to/server-key.pem"
+password = "your-secure-password"</code></pre>
+
+          <p>Start Redistill normally; it will load the certificates and listen for TLS connections.</p>
+
+          <h2 id="dev">Development workflow</h2>
+          <p>For local development you can use self-signed certificates and connect with <code>redis-cli</code>:</p>
+          <pre><code class="language-bash"># Generate test certs (see upstream tests/scripts)
+./tests/scripts/generate_test_certs.sh
+
+# Example config
+[security]
+tls_enabled = true
+tls_cert_path = "tests/certs/server-cert.pem"
+tls_key_path = "tests/certs/server-key.pem"</code></pre>
+          <p>Then connect using:</p>
+          <pre><code class="language-bash">redis-cli --tls --insecure -h 127.0.0.1 -p 6379 PING</code></pre>
+
+          <h2 id="prod">Production workflow</h2>
+          <p>Using Let&apos;s Encrypt certificates on a public domain:</p>
+          <pre><code class="language-bash">certbot certonly --standalone -d your-domain.com</code></pre>
+          <p>Configure Redistill:</p>
+          <pre><code class="language-toml">[security]
+tls_enabled = true
+tls_cert_path = "/etc/letsencrypt/live/your-domain.com/fullchain.pem"
+tls_key_path  = "/etc/letsencrypt/live/your-domain.com/privkey.pem"
+password      = "your-secure-password"</code></pre>
+
+          <p>Clients connect with TLS enabled:</p>
+          <pre><code class="language-bash">redis-cli --tls -h your-domain.com -p 6379 PING</code></pre>
+
+          <h2 id="future">Future enhancements</h2>
+          <p>Planned improvements to the TLS subsystem include:</p>
+          <ul>
+            <li><strong>Mutual TLS (mTLS)</strong> – client certificate authentication.</li>
+            <li><strong>Certificate reloading</strong> – hot reload without restarting the server.</li>
+            <li><strong>Cipher suite control</strong> – configurable cipher and protocol selection.</li>
+            <li><strong>TLS-aware metrics</strong> – exposing TLS version, cipher and error counters.</li>
+            <li><strong>ACME integration</strong> – built-in Let&apos;s Encrypt support.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>© <span id="year"></span> Redistill. MIT licensed, open source.</div>
+        <div class="footer-links">
+          <a href="https://github.com/redistill-io/redistill" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="index.html">Docs home</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-toml.min.js" defer></script>
+    <script src="../assets/js/main.js"></script>
+  </body>
+</html>
+

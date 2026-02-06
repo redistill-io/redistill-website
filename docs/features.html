@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Features – Redistill</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Learn about Redistill's implemented features, supported commands, security, memory management, performance optimizations, and areas intentionally left out for maximum speed."
+    />
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+  </head>
+  <body class="page">
+    <header class="site-header">
+      <div class="container">
+        <div class="nav">
+          <a href="../index.html" class="logo">
+            <span class="logo-mark"></span>
+            <span>Redistill</span>
+          </a>
+          <nav class="nav-links" aria-label="Main">
+            <a href="../index.html">Home</a>
+            <a href="index.html" class="active">Docs</a>
+            <a href="../benchmarks.html">Benchmarks</a>
+            <a href="../roadmap.html">Roadmap</a>
+            <a href="../contact.html">Contact</a>
+          </nav>
+          <button class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+          <button class="nav-toggle" type="button" aria-label="Toggle navigation" onclick="toggleNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+        <nav id="nav-mobile" class="nav-links-mobile" aria-label="Mobile">
+          <a href="../index.html">Home</a>
+          <a href="index.html" class="active">Docs</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <div class="container">
+          <h1 class="page-title">Features</h1>
+          <p class="page-lead">
+            Redistill implements a focused subset of the Redis feature set, tuned for high-performance key-value and hash
+            workloads, with security, monitoring and optional persistence built in.
+          </p>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="container">
+          <div class="toc">
+            <div class="doc-search">
+              <label class="doc-search-label" for="doc-search-input">Search this page</label>
+              <input
+                id="doc-search-input"
+                class="doc-search-input"
+                type="search"
+                placeholder="Search headings (min. 2 characters)…"
+              />
+              <ul id="doc-search-results" class="doc-search-results"></ul>
+            </div>
+            <div class="toc-title">On this page</div>
+            <ul>
+              <li><a href="#core">Core functionality</a></li>
+              <li><a href="#commands">Supported commands</a></li>
+              <li><a href="#security">Security</a></li>
+              <li><a href="#memory">Memory &amp; eviction</a></li>
+              <li><a href="#reliability">Reliability &amp; monitoring</a></li>
+              <li><a href="#persistence">Optional persistence</a></li>
+              <li><a href="#not-implemented">Intentionally not implemented</a></li>
+              <li><a href="#fit">Use case fit &amp; comparison</a></li>
+            </ul>
+          </div>
+
+          <h2 id="core">Core functionality</h2>
+          <p>
+            Redistill is a high-performance, in-memory key-value store that implements the Redis RESP protocol. It
+            supports strings, counters and hashes with TTLs and a sharded internal architecture for concurrency.
+          </p>
+          <ul>
+            <li><strong>Protocol:</strong> Full RESP support, compatible with <code>redis-cli</code> and Redis client libraries.</li>
+            <li><strong>Storage:</strong> In-memory hash-based store, sharded (256+ shards, 2048 recommended).</li>
+            <li><strong>TTL:</strong> Automatic key expiration, lazy deletion and memory reclamation.</li>
+          </ul>
+
+          <h2 id="commands">Supported commands</h2>
+          <h3>Data commands</h3>
+          <ul>
+            <li>
+              <code>SET key value [EX seconds | PX milliseconds] [NX | XX] [GET]</code> – store values with optional TTL and conditional flags.
+            </li>
+            <li><code>GET key</code>, <code>DEL key [key ...]</code>, <code>EXISTS key [key ...]</code></li>
+            <li><code>MSET key value [key value ...]</code>, <code>MGET key [key ...]</code></li>
+            <li><code>KEYS pattern</code> (blocking, use with caution), <code>SCAN cursor [MATCH pattern] [COUNT n]</code> (non-blocking key scan).</li>
+            <li><code>DBSIZE</code>, <code>FLUSHDB</code>, <code>FLUSHALL</code></li>
+          </ul>
+
+          <h3>Counter commands</h3>
+          <ul>
+            <li><code>INCR key</code>, <code>DECR key</code></li>
+            <li><code>INCRBY key n</code>, <code>DECRBY key n</code></li>
+          </ul>
+
+          <h3>Hash commands</h3>
+          <ul>
+            <li><code>HSET key field value [field value ...]</code></li>
+            <li><code>HGET key field</code></li>
+            <li><code>HGETALL key</code></li>
+          </ul>
+          <p>
+            Hashes are ideal for user profiles, configuration objects or product metadata, allowing efficient field-level updates without rewriting full JSON blobs.
+          </p>
+
+          <h3>TTL commands</h3>
+          <ul>
+            <li><code>EXPIRE key seconds</code></li>
+            <li><code>TTL key</code>, <code>PTTL key</code></li>
+            <li><code>PERSIST key</code></li>
+          </ul>
+
+          <h3>Server commands</h3>
+          <ul>
+            <li><code>PING</code>, <code>AUTH password</code>, <code>INFO</code></li>
+            <li><code>CONFIG GET</code> and <code>COMMAND</code> stubs for client compatibility.</li>
+          </ul>
+
+          <h2 id="security">Security</h2>
+          <p>
+            Security features are designed to be production-ready while keeping configuration simple.
+          </p>
+          <ul>
+            <li><strong>Password authentication</strong> via <code>AUTH</code> and <code>REDIS_PASSWORD</code> / config file.</li>
+            <li><strong>TLS/SSL encryption</strong> using Rustls, with certificate paths configured in <code>[security]</code>.</li>
+            <li><strong>Connection management:</strong> max connection limits, connection rate limiting and timeouts.</li>
+          </ul>
+
+          <h2 id="memory">Memory &amp; eviction</h2>
+          <p>
+            Redistill tracks memory usage in real time and supports configurable eviction policies when a memory limit is set.
+          </p>
+          <ul>
+            <li><code>max_memory</code> (0 = unlimited) controls the upper bound.</li>
+            <li>Eviction policies:
+              <ul>
+                <li><strong>allkeys-lru</strong> – least recently used keys (recommended default)</li>
+                <li><strong>allkeys-random</strong> – random eviction, faster but less targeted</li>
+                <li><strong>allkeys-s3fifo</strong> – modern S3-FIFO algorithm with better hit rates on many workloads</li>
+                <li><strong>noeviction</strong> – reject new writes when memory is full</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h2 id="reliability">Reliability &amp; monitoring</h2>
+          <ul>
+            <li><strong>Graceful shutdown</strong> with signal handling, connection draining and final statistics.</li>
+            <li><strong>Health checks</strong> via optional HTTP endpoint for readiness and liveness probing.</li>
+            <li>
+              <strong>Metrics:</strong> total and active connections, rejected connections, commands processed, memory usage,
+              evicted keys, uptime and more exposed via <code>INFO</code> and the health endpoint.
+            </li>
+          </ul>
+
+          <h2 id="persistence">Optional snapshot persistence</h2>
+          <p>
+            For maximum performance, Redistill disables persistence by default. When you need warm restarts, you can
+            enable snapshot-based persistence:
+          </p>
+          <ul>
+            <li><code>SAVE</code> – synchronous snapshot.</li>
+            <li><code>BGSAVE</code> – background snapshot that doesn&apos;t block request handling.</li>
+            <li><code>LASTSAVE</code> – timestamp of last successful save.</li>
+          </ul>
+          <pre><code>[persistence]
+enabled = false
+snapshot_path = "redistill.rdb"
+snapshot_interval = 300
+save_on_shutdown = true</code></pre>
+          <p>
+            This is intentionally snapshot-only (RDB-like). It is not designed for real-time durability; some data
+            between snapshots can be lost on crash or restart.
+          </p>
+
+          <h2 id="not-implemented">Intentionally not implemented</h2>
+          <p>
+            To keep the core tight and fast, several Redis features are explicitly out of scope:
+          </p>
+          <ul>
+            <li><strong>Write-ahead logging (AOF).</strong></li>
+            <li><strong>Replication and clustering.</strong></li>
+            <li><strong>Complex data structures</strong> like lists, sets, sorted sets, streams, bitmaps, HyperLogLog.</li>
+            <li><strong>Pub/Sub.</strong></li>
+            <li><strong>Transactions</strong> (<code>MULTI</code>/<code>EXEC</code>).</li>
+            <li><strong>Lua scripting.</strong></li>
+            <li><strong>Redis modules.</strong></li>
+          </ul>
+          <p>
+            Many of these appear on the roadmap as potential future additions if they can be implemented without
+            compromising core performance goals.
+          </p>
+
+          <h2 id="fit">Use case fit &amp; comparison</h2>
+          <h3>Where Redistill excels</h3>
+          <ul>
+            <li>Session storage with high read/write ratios and TTLs.</li>
+            <li>API response caching for JSON/HTML payloads.</li>
+            <li>Rate limiting and counters where occasional data loss is acceptable.</li>
+            <li>Real-time leaderboards and metrics that can be rebuilt from a primary store.</li>
+          </ul>
+
+          <h3>Comparison to Redis</h3>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Feature</th>
+                  <th>Redistill</th>
+                  <th>Redis</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Protocol</td>
+                  <td>RESP (Redis-compatible)</td>
+                  <td>RESP</td>
+                </tr>
+                <tr>
+                  <td>Throughput (single instance)</td>
+                  <td>≈9.07M ops/s</td>
+                  <td>≈2.03M ops/s</td>
+                </tr>
+                <tr>
+                  <td>p50 latency</td>
+                  <td>≈0.48&nbsp;ms</td>
+                  <td>≈2.38&nbsp;ms</td>
+                </tr>
+                <tr>
+                  <td>Data types</td>
+                  <td>String, counters, hashes</td>
+                  <td>Full set (lists, sets, sorted sets, etc.)</td>
+                </tr>
+                <tr>
+                  <td>Persistence</td>
+                  <td>Optional snapshots</td>
+                  <td>AOF + RDB</td>
+                </tr>
+                <tr>
+                  <td>Replication &amp; clustering</td>
+                  <td>Not built-in (client-side sharding)</td>
+                  <td>Built-in replication and Redis Cluster</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            In short: use Redistill when you want the fastest possible Redis-compatible cache, and reach for Redis or
+            Dragonfly when you need full data structures, clustering, or strong persistence guarantees.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>© <span id="year"></span> Redistill. MIT licensed, open source.</div>
+        <div class="footer-links">
+          <a href="https://github.com/redistill-io/redistill" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="index.html">Docs home</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
+    <script src="../assets/js/main.js"></script>
+  </body>
+</html>
+

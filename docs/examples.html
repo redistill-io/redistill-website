@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Practical Examples – Redistill</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Real-world code examples and patterns for using Redistill: HTTP response caching, session storage, rate limiting, hashes for profiles, and key scanning."
+    />
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"
+    />
+  </head>
+  <body class="page">
+    <header class="site-header">
+      <div class="container">
+        <div class="nav">
+          <a href="../index.html" class="logo">
+            <span class="logo-mark"></span>
+            <span>Redistill</span>
+          </a>
+          <nav class="nav-links" aria-label="Main">
+            <a href="../index.html">Home</a>
+            <a href="index.html" class="active">Docs</a>
+            <a href="../benchmarks.html">Benchmarks</a>
+            <a href="../roadmap.html">Roadmap</a>
+            <a href="../contact.html">Contact</a>
+          </nav>
+          <button class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+          <button class="nav-toggle" type="button" aria-label="Toggle navigation" onclick="toggleNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+        <nav id="nav-mobile" class="nav-links-mobile" aria-label="Mobile">
+          <a href="../index.html">Home</a>
+          <a href="index.html" class="active">Docs</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <div class="container">
+          <h1 class="page-title">Practical Examples</h1>
+          <p class="page-lead">
+            A set of patterns, snippets and best practices showing how to integrate Redistill into real-world web
+            applications and services.
+          </p>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="container">
+          <div class="toc">
+            <div class="doc-search">
+              <label class="doc-search-label" for="doc-search-input">Search this page</label>
+              <input
+                id="doc-search-input"
+                class="doc-search-input"
+                type="search"
+                placeholder="Search headings (min. 2 characters)…"
+              />
+              <ul id="doc-search-results" class="doc-search-results"></ul>
+            </div>
+            <div class="toc-title">On this page</div>
+            <ul>
+              <li><a href="#data-sizes">Data sizes &amp; basic operations</a></li>
+              <li><a href="#flask-cache">HTTP response caching (Python + Flask)</a></li>
+              <li><a href="#node-cache">JSON API caching (Node.js + Express)</a></li>
+              <li><a href="#hashes">Using hashes for profiles &amp; config</a></li>
+              <li><a href="#sessions">Session storage</a></li>
+              <li><a href="#ratelimit">Rate limiting</a></li>
+              <li><a href="#scan">Key scanning with SCAN</a></li>
+            </ul>
+          </div>
+
+          <h2 id="data-sizes">Data sizes &amp; basic operations</h2>
+          <p>Redistill is optimized for typical cache payload sizes:</p>
+          <ul>
+            <li>Session tokens: 32–256 bytes.</li>
+            <li>API JSON responses: 1–10&nbsp;KB.</li>
+            <li>HTML fragments/pages: 10–200&nbsp;KB.</li>
+          </ul>
+          <pre><code class="language-bash"># Small key-value (session)
+SET "session:user:a1b2c3d4" "user_id=12345,logged_in=true,role=admin"
+
+# Medium JSON response (API cache)
+SET "api:users:12345" "{...json...}" EX 300
+
+# Large HTML page cache
+SET "page:/products/12345" "&lt;html&gt;...&lt;/html&gt;" EX 3600</code></pre>
+
+          <h2 id="flask-cache">HTTP response caching (Python + Flask)</h2>
+          <pre><code class="language-python">import json
+import redis
+from flask import Flask, jsonify
+from functools import wraps
+
+app = Flask(__name__)
+cache = redis.Redis(host="localhost", port=6379, decode_responses=True)
+
+def cache_response(ttl=300):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            cache_key = f"api:{func.__name__}:{':'.join(map(str, args))}"
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return jsonify(json.loads(cached)), 200, {"X-Cache": "HIT"}
+
+            result = func(*args, **kwargs)
+            cache.setex(cache_key, ttl, json.dumps(result))
+            return jsonify(result), 200, {"X-Cache": "MISS"}
+
+        return wrapper
+    return decorator
+
+@app.route("/api/users/&lt;int:user_id&gt;")
+@cache_response(ttl=300)
+def get_user(user_id):
+    user = load_user_from_db(user_id)
+    return {"id": user.id, "name": user.name, "email": user.email}</code></pre>
+
+          <h2 id="node-cache">JSON API caching (Node.js + Express)</h2>
+          <pre><code class="language-javascript">const express = require("express");
+const Redis = require("ioredis");
+
+const app = express();
+const redis = new Redis({ host: "localhost", port: 6379 });
+
+const cacheMiddleware = (ttl = 300) =&gt; async (req, res, next) =&gt; {
+  const cacheKey = `api:${req.originalUrl}`;
+  try {
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      res.set("X-Cache", "HIT");
+      return res.json(JSON.parse(cached));
+    }
+
+    const originalJson = res.json.bind(res);
+    res.json = (data) =&gt; {
+      redis.setex(cacheKey, ttl, JSON.stringify(data));
+      res.set("X-Cache", "MISS");
+      return originalJson(data);
+    };
+
+    next();
+  } catch {
+    next();
+  }
+};
+
+app.get("/api/products", cacheMiddleware(600), async (req, res) =&gt; {
+  const products = await loadProductsFromDb();
+  res.json(products);
+});</code></pre>
+
+          <h2 id="hashes">Using hashes for profiles &amp; config</h2>
+          <p>Hashes are ideal for structured data like user profiles or configuration objects.</p>
+          <pre><code class="language-bash"># Create a user profile
+HSET user:1001 name "John Doe" email "john@example.com" age "30" city "New York"
+
+# Get a single field
+HGET user:1001 name
+
+# Get all fields
+HGETALL user:1001</code></pre>
+
+          <h3>Python: user profiles</h3>
+          <pre><code class="language-python">import redis
+
+cache = redis.Redis(host="localhost", port=6379, decode_responses=True)
+
+def create_user_profile(user_id, profile):
+    key = f"user:{user_id}"
+    cache.hset(key, mapping=profile)
+
+def get_user_profile(user_id):
+    profile = cache.hgetall(f"user:{user_id}")
+    return profile or None
+
+create_user_profile(1001, {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "age": "30",
+    "city": "New York",
+})</code></pre>
+
+          <h2 id="sessions">Session storage</h2>
+          <pre><code class="language-python">from flask import Flask, session
+from flask_session import Session
+import redis
+
+app = Flask(__name__)
+app.config["SESSION_TYPE"] = "redis"
+app.config["SESSION_REDIS"] = redis.Redis(host="localhost", port=6379)
+Session(app)
+
+@app.route("/login", methods=["POST"])
+def login():
+    session["user_id"] = 12345
+    session["username"] = "john_doe"
+    session.permanent = True  # expires after configured lifetime
+    return {"status": "logged_in"}</code></pre>
+
+          <h2 id="ratelimit">Rate limiting</h2>
+          <pre><code class="language-python">import redis
+from datetime import datetime
+
+cache = redis.Redis(host="localhost", port=6379)
+
+def rate_limit(user_id, max_requests=100, window=3600):
+    key = f"ratelimit:{user_id}:{datetime.utcnow().strftime('%Y%m%d%H')}"
+    current = cache.get(key)
+    if current and int(current) &gt;= max_requests:
+        return False
+
+    pipe = cache.pipeline()
+    pipe.incr(key)
+    pipe.expire(key, window)
+    pipe.execute()
+    return True</code></pre>
+
+          <h2 id="scan">Key scanning with SCAN</h2>
+          <p>Use <code>SCAN</code> instead of <code>KEYS *</code> in production to avoid blocking the server.</p>
+          <pre><code class="language-python">import redis
+
+cache = redis.Redis(host="localhost", port=6379)
+
+def scan_keys(pattern="*", count=100):
+    cursor = 0
+    keys = []
+    while True:
+        cursor, batch = cache.scan(cursor=cursor, match=pattern, count=count)
+        keys.extend(batch)
+        if cursor == 0:
+            break
+    return keys
+
+session_keys = scan_keys("session:*")</code></pre>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>© <span id="year"></span> Redistill. MIT licensed, open source.</div>
+        <div class="footer-links">
+          <a href="https://github.com/redistill-io/redistill" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="index.html">Docs home</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js" defer></script>
+    <script src="../assets/js/main.js"></script>
+  </body>
+</html>
+

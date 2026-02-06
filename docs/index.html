@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Documentation – Redistill</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Reference documentation for Redistill: quick start, features, architecture, configuration, performance tuning, production guide, TLS and practical examples."
+    />
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+  </head>
+  <body class="page">
+    <header class="site-header">
+      <div class="container">
+        <div class="nav">
+          <a href="../index.html" class="logo">
+            <span class="logo-mark"></span>
+            <span>Redistill</span>
+          </a>
+          <nav class="nav-links" aria-label="Main">
+            <a href="../index.html">Home</a>
+            <a href="index.html" class="active">Docs</a>
+            <a href="../benchmarks.html">Benchmarks</a>
+            <a href="../roadmap.html">Roadmap</a>
+            <a href="../contact.html">Contact</a>
+          </nav>
+          <button class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+          <button class="nav-toggle" type="button" aria-label="Toggle navigation" onclick="toggleNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+        <nav id="nav-mobile" class="nav-links-mobile" aria-label="Mobile">
+          <a href="../index.html">Home</a>
+          <a href="index.html" class="active">Docs</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <div class="container">
+          <h1 class="page-title">Documentation</h1>
+          <p class="page-lead">
+            Learn how to install, configure, run, and operate Redistill in production. These pages are a curated HTML
+            version of the upstream markdown docs.
+          </p>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="container">
+          <div class="grid-2">
+            <article class="card">
+              <h2 class="card-title"><a href="quickstart.html">Quick Start</a></h2>
+              <p class="card-body">
+                Get Redistill running in minutes using Docker, Homebrew, direct binaries, or by building from source.
+                Includes basic commands, health checks and first benchmarks.
+              </p>
+            </article>
+            <article class="card">
+              <h2 class="card-title"><a href="features.html">Features</a></h2>
+              <p class="card-body">
+                Overview of implemented Redis protocol features, supported commands, security, memory management,
+                monitoring, and what is intentionally not implemented.
+              </p>
+            </article>
+            <article class="card">
+              <h2 class="card-title"><a href="architecture.html">Architecture &amp; Design</a></h2>
+              <p class="card-body">
+                Design philosophy and internals: multi-threaded runtime, sharded store with DashMap, zero-copy design,
+                eviction strategy, and the trade-offs that power Redistill.
+              </p>
+            </article>
+            <article class="card">
+              <h2 class="card-title"><a href="config.html">Configuration Reference</a></h2>
+              <p class="card-body">
+                Complete reference for <code>redistill.toml</code> and environment variables, including server, security,
+                memory, logging, performance and persistence options.
+              </p>
+            </article>
+            <article class="card">
+              <h2 class="card-title"><a href="performance-tuning.html">Performance Tuning Guide</a></h2>
+              <p class="card-body">
+                Recommended settings for different workloads, along with guidance on shards, batch size, buffer pools,
+                eviction, kernel tuning, and production checklists.
+              </p>
+            </article>
+            <article class="card">
+              <h2 class="card-title"><a href="production-guide.html">Production Guide</a></h2>
+              <p class="card-body">
+                End-to-end guide for deploying Redistill in production: Docker, systemd, Kubernetes, monitoring, scaling
+                strategies, backup and recovery, and security hardening.
+              </p>
+            </article>
+            <article class="card">
+              <h2 class="card-title"><a href="tls.html">TLS / SSL</a></h2>
+              <p class="card-body">
+                Summary of Redistill&apos;s TLS implementation based on Rustls, including configuration, development vs
+                production workflows, and future enhancements like mTLS.
+              </p>
+            </article>
+            <article class="card">
+              <h2 class="card-title"><a href="examples.html">Practical Examples</a></h2>
+              <p class="card-body">
+                Real-world patterns for using Redistill in your applications: response caching, session storage, rate
+                limiting, hash-based profiles, and key scanning with SCAN.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>© <span id="year"></span> Redistill. MIT licensed, open source.</div>
+        <div class="footer-links">
+          <a href="https://github.com/redistill-io/redistill" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="index.html">Docs home</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
+    <script src="../assets/js/main.js"></script>
+  </body>
+</html>
+

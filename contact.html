@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Contact – Redistill</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Contact the maintainers of Redistill for questions, feedback, and collaboration."
+    />
+    <link rel="stylesheet" href="assets/css/styles.css" />
+  </head>
+  <body class="page">
+    <header class="site-header">
+      <div class="container">
+        <div class="nav">
+          <a href="index.html" class="logo">
+            <span class="logo-mark"></span>
+            <span>Redistill</span>
+          </a>
+          <nav class="nav-links" aria-label="Main">
+            <a href="index.html">Home</a>
+            <a href="docs/index.html">Docs</a>
+            <a href="benchmarks.html">Benchmarks</a>
+            <a href="roadmap.html">Roadmap</a>
+            <a href="contact.html" class="active">Contact</a>
+          </nav>
+          <button class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+          <button class="nav-toggle" type="button" aria-label="Toggle navigation" onclick="toggleNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+        <nav id="nav-mobile" class="nav-links-mobile" aria-label="Mobile">
+          <a href="index.html">Home</a>
+          <a href="docs/index.html">Docs</a>
+          <a href="benchmarks.html">Benchmarks</a>
+          <a href="roadmap.html">Roadmap</a>
+          <a href="contact.html" class="active">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <div class="container">
+          <h1 class="page-title">Contact</h1>
+          <p class="page-lead">
+            Have a question about Redistill, want to share benchmarks, or interested in collaborating?
+            Reach out directly or start a conversation in the GitHub repository.
+          </p>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="container">
+          <div class="contact-card">
+            <div class="contact-row">
+              <div class="contact-label">Email</div>
+              <div>
+                For general questions, feedback, or collaboration ideas, email
+                <a href="mailto:hello@shaikhshahid.com">hello@shaikhshahid.com</a>.
+              </div>
+            </div>
+            <div class="contact-row" style="margin-top: 1rem">
+              <div class="contact-label">GitHub</div>
+              <div>
+                For bug reports, feature requests, or design discussions, please use the GitHub repository:
+                <a href="https://github.com/redistill-io/redistill" target="_blank" rel="noreferrer"
+                  >github.com/redistill-io/redistill</a
+                >.
+              </div>
+            </div>
+            <div class="contact-row" style="margin-top: 1rem">
+              <div class="contact-label">Issues &amp; support</div>
+              <div>
+                When opening an issue, include your environment details, configuration, and any relevant benchmark
+                commands so maintainers can help quickly.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>© <span id="year"></span> Redistill. MIT licensed, open source.</div>
+        <div class="footer-links">
+          <a href="https://github.com/redistill-io/redistill" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="docs/index.html">Docs</a>
+          <a href="benchmarks.html">Benchmarks</a>
+          <a href="roadmap.html">Roadmap</a>
+          <a href="contact.html">Contact</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
+    <script src="assets/js/main.js"></script>
+  </body>
+</html>
+

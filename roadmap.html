@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Roadmap &amp; Future Enhancements – Redistill</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Planned features and future enhancements for Redistill, including clustering, replication, new commands, TLS improvements, and performance research areas."
+    />
+    <link rel="stylesheet" href="assets/css/styles.css" />
+  </head>
+  <body class="page">
+    <header class="site-header">
+      <div class="container">
+        <div class="nav">
+          <a href="index.html" class="logo">
+            <span class="logo-mark"></span>
+            <span>Redistill</span>
+          </a>
+          <nav class="nav-links" aria-label="Main">
+            <a href="index.html">Home</a>
+            <a href="docs/index.html">Docs</a>
+            <a href="benchmarks.html">Benchmarks</a>
+            <a href="roadmap.html" class="active">Roadmap</a>
+            <a href="contact.html">Contact</a>
+          </nav>
+          <button class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+          <button class="nav-toggle" type="button" aria-label="Toggle navigation" onclick="toggleNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+        <nav id="nav-mobile" class="nav-links-mobile" aria-label="Mobile">
+          <a href="index.html">Home</a>
+          <a href="docs/index.html">Docs</a>
+          <a href="benchmarks.html">Benchmarks</a>
+          <a href="roadmap.html" class="active">Roadmap</a>
+          <a href="contact.html">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <div class="container">
+          <h1 class="page-title">Roadmap &amp; Future Enhancements</h1>
+          <p class="page-lead">
+            Redistill focuses on being the fastest single-instance Redis-compatible key-value store.
+            This page aggregates planned features and areas of active exploration from the upstream docs.
+          </p>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="container">
+          <div class="toc">
+            <div class="toc-title">Planned areas</div>
+            <ul>
+              <li><a href="#near-term">Near-term enhancements</a></li>
+              <li><a href="#medium-term">Medium-term roadmap</a></li>
+              <li><a href="#long-term">Long-term research</a></li>
+              <li><a href="#tls-future">TLS &amp; security enhancements</a></li>
+              <li><a href="#observability">Observability &amp; monitoring</a></li>
+              <li><a href="#contributing">Contributing</a></li>
+            </ul>
+          </div>
+
+          <section id="near-term">
+            <h2>Near-term enhancements (high priority)</h2>
+            <p>
+              These are features and improvements called out as high priority in the <em>Architecture</em> and
+              <em>Features</em> documentation. Status may evolve; check the GitHub repository for the latest state.
+            </p>
+            <ul>
+              <li>
+                <strong>Additional string commands</strong> –
+                <code>APPEND</code>, <code>STRLEN</code>, and <code>INCRBYFLOAT</code> to round out the string API.
+              </li>
+              <li>
+                <strong>Expanded hash operations</strong> – additional commands such as
+                <code>HDEL</code>, <code>HKEYS</code>, <code>HVALS</code>, <code>HLEN</code>, <code>HEXISTS</code>,
+                <code>HMSET</code>, and <code>HMGET</code> to complement the existing
+                <code>HSET</code>/<code>HGET</code>/<code>HGETALL</code>.
+              </li>
+              <li>
+                <strong>Production integrations</strong> – deeper integration with monitoring stacks like Prometheus for
+                high-cardinality metrics and dashboards.
+              </li>
+              <li>
+                <strong>Additional benchmarking &amp; tuning guides</strong> – more real-world workloads beyond synthetic
+                benchmarks, with step-by-step tuning recipes.
+              </li>
+            </ul>
+            <p><strong>Status:</strong> Planned / in progress. See the GitHub issues and milestones for up-to-date details.</p>
+          </section>
+
+          <section id="medium-term">
+            <h2>Medium-term roadmap</h2>
+            <p>
+              These items expand Redistill&apos;s capabilities while staying true to its performance-first focus.
+            </p>
+            <h3>Data structures &amp; commands</h3>
+            <ul>
+              <li>
+                <strong>Basic lists</strong> – operations like <code>LPUSH</code>, <code>RPUSH</code>,
+                <code>LPOP</code>, <code>RPOP</code>, and <code>LRANGE</code> for queue-style workloads that still
+                benefit from extremely fast in-memory operations.
+              </li>
+              <li>
+                <strong>Basic sets</strong> – operations such as <code>SADD</code>, <code>SMEMBERS</code>,
+                <code>SREM</code> for membership tracking and simple uniqueness constraints.
+              </li>
+              <li>
+                <strong>Client introspection</strong> – <code>CLIENT</code> commands (list/kill) to assist with
+                operational debugging and connection management.
+              </li>
+              <li>
+                <strong>Pub/Sub</strong> – foundational publish/subscribe support (<code>PUBLISH</code>,
+                <code>SUBSCRIBE</code>, <code>PSUBSCRIBE</code>) for lightweight messaging patterns where full
+                message-broker features are not required.
+              </li>
+            </ul>
+
+            <h3>Scaling &amp; distribution</h3>
+            <ul>
+              <li>
+                <strong>Clustering support</strong> – built-in sharding and cluster awareness as a complement to today&apos;s
+                client-side or proxy-based sharding strategies.
+              </li>
+              <li>
+                <strong>Replication</strong> – optional master–replica replication for read scaling and high availability,
+                with careful evaluation of the performance trade-offs.
+              </li>
+            </ul>
+            <p><strong>Status:</strong> Planned. Exact APIs and trade-offs will be designed to preserve Redistill&apos;s performance focus.</p>
+          </section>
+
+          <section id="long-term">
+            <h2>Long-term research &amp; performance work</h2>
+            <p>
+              The Architecture doc outlines several deeper performance and systems topics that are being explored for
+              future versions.
+            </p>
+            <ul>
+              <li>
+                <strong>DPDK and kernel-bypass networking</strong> – investigate bypassing the kernel networking stack for
+                even lower tail latency and higher packet throughput.
+              </li>
+              <li>
+                <strong>NUMA-awareness</strong> – better placement of threads and data on multi-socket machines to reduce
+                cross-node memory traffic and improve cache locality.
+              </li>
+              <li>
+                <strong>jemalloc tuning</strong> – fine-tuned allocator settings and potential huge-page usage to improve
+                memory throughput and fragmentation characteristics.
+              </li>
+              <li>
+                <strong>CPU pinning &amp; affinity</strong> – mapping worker threads to specific cores to reduce context
+                switching and improve predictability.
+              </li>
+            </ul>
+            <p><strong>Status:</strong> Exploratory / research. These changes will only land if they provide clear wins without sacrificing usability.</p>
+          </section>
+
+          <section id="tls-future">
+            <h2>TLS &amp; security enhancements</h2>
+            <p>
+              The TLS implementation summary highlights several future improvements on top of the existing Rustls-based
+              TLS support.
+            </p>
+            <ul>
+              <li>
+                <strong>Mutual TLS (mTLS)</strong> – client certificate authentication for stronger authentication in
+                zero-trust and multi-tenant environments.
+              </li>
+              <li>
+                <strong>Certificate reloading</strong> – hot reloading of TLS certificates and keys without process
+                restarts, ideal for Let&apos;s Encrypt and automated rotations.
+              </li>
+              <li>
+                <strong>Cipher suite control</strong> – configuration of allowed cipher suites and protocol versions
+                beyond the secure defaults.
+              </li>
+              <li>
+                <strong>TLS-aware metrics</strong> – visibility into TLS versions, cipher usage, and error rates in
+                operational metrics.
+              </li>
+              <li>
+                <strong>ACME integration</strong> – potential built-in support for obtaining and renewing certificates
+                from Let&apos;s Encrypt and similar providers.
+              </li>
+            </ul>
+            <p><strong>Status:</strong> Planned enhancements on top of the current, production-ready TLS stack.</p>
+          </section>
+
+          <section id="observability">
+            <h2>Observability &amp; monitoring</h2>
+            <p>
+              Monitoring is already available via the <code>INFO</code> command and HTTP health endpoint, but the docs
+              call out additional observability work.
+            </p>
+            <ul>
+              <li>
+                <strong>First-class Prometheus integration</strong> – native metrics endpoints optimised for Prometheus
+                scraping, with clear naming and labels.
+              </li>
+              <li>
+                <strong>Dashboards &amp; alerts</strong> – reference dashboards for Grafana and recommended alerts for memory,
+                evictions, connection rejections, and throughput anomalies.
+              </li>
+            </ul>
+            <p><strong>Status:</strong> Planned. In the meantime, you can export metrics via the health endpoint and custom collectors.</p>
+          </section>
+
+          <section id="contributing">
+            <h2>Contributing to the roadmap</h2>
+            <p>
+              Redistill is an open source project. The roadmap is intentionally shaped by real-world usage and
+              contributor feedback.
+            </p>
+            <ul>
+              <li>
+                <strong>GitHub Issues</strong> – propose features, report performance results, or discuss trade-offs:
+                see the repository&apos;s Issues tab.
+              </li>
+              <li>
+                <strong>Discussions</strong> – share ideas, architectures and benchmarks that could influence future work.
+              </li>
+              <li>
+                <strong>Pull requests</strong> – contributions are welcome; please open an issue first for larger
+                changes, and include tests and documentation where possible.
+              </li>
+            </ul>
+            <p>
+              For questions or potential collaborations, you can also reach the maintainer directly on the
+              <a href="contact.html">Contact</a> page.
+            </p>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>© <span id="year"></span> Redistill. MIT licensed, open source.</div>
+        <div class="footer-links">
+          <a href="https://github.com/redistill-io/redistill" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="docs/index.html">Docs</a>
+          <a href="benchmarks.html">Benchmarks</a>
+          <a href="roadmap.html">Roadmap</a>
+          <a href="contact.html">Contact</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
+    <script src="assets/js/main.js"></script>
+  </body>
+</html>
+

@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Redistill – Extremely Fast Redis-Compatible KV Database</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Redistill is a high-performance, Redis-compatible in-memory key-value database delivering up to 4.5x higher throughput and 5x lower latency than Redis."
+    />
+    <link rel="stylesheet" href="assets/css/styles.css" />
+  </head>
+  <body class="page">
+    <header class="site-header">
+      <div class="container">
+        <div class="nav">
+          <a href="index.html" class="logo">
+            <span class="logo-mark"></span>
+            <span>Redistill</span>
+          </a>
+          <nav class="nav-links" aria-label="Main">
+            <a href="index.html" class="active">Home</a>
+            <a href="docs/index.html">Docs</a>
+            <a href="benchmarks.html">Benchmarks</a>
+            <a href="roadmap.html">Roadmap</a>
+            <a href="contact.html">Contact</a>
+          </nav>
+          <button class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+          <button class="nav-toggle" type="button" aria-label="Toggle navigation" onclick="toggleNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+        <nav id="nav-mobile" class="nav-links-mobile" aria-label="Mobile">
+          <a href="index.html" class="active">Home</a>
+          <a href="docs/index.html">Docs</a>
+          <a href="benchmarks.html">Benchmarks</a>
+          <a href="roadmap.html">Roadmap</a>
+          <a href="contact.html">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container hero-grid">
+          <div>
+            <p class="hero-kicker">Extremely fast Redis-compatible cache</p>
+            <h1 class="hero-title">High Performance Key Value Database, up to 4.5× faster than Redis.</h1>
+            <p class="hero-subtitle">
+              Redistill is a high-performance, in-memory key-value database that speaks the Redis protocol and delivers
+              record-setting single-instance throughput with sub-millisecond latency.
+            </p>
+            <div class="hero-ctas">
+              <a class="btn btn-primary" href="docs/quickstart.html">Get started in 5 minutes</a>
+              <a class="btn btn-ghost" href="https://github.com/redistill-io/redistill" target="_blank" rel="noreferrer">
+                View on GitHub
+              </a>
+            </div>
+            <div class="hero-meta">
+              <div class="hero-stat">
+                <div class="hero-stat-label">Throughput</div>
+                <div class="hero-stat-value">9.07M ops/s</div>
+                <div class="hero-stat-caption">Up to 4.5× Redis, 1.7× Dragonfly</div>
+              </div>
+              <div class="hero-stat">
+                <div class="hero-stat-label">Latency (p50)</div>
+                <div class="hero-stat-value">0.48&nbsp;ms</div>
+                <div class="hero-stat-caption">5× lower than Redis</div>
+              </div>
+              <div class="hero-stat">
+                <div class="hero-stat-label">Cost efficiency</div>
+                <div class="hero-stat-value">50–83% less</div>
+                <div class="hero-stat-caption">Fewer instances for same load</div>
+              </div>
+            </div>
+          </div>
+          <aside class="hero-card" aria-label="Performance summary">
+            <div class="hero-chip">Single-instance benchmark (AWS c7i)</div>
+            <div class="hero-metric-row">
+              <span>Competitive benchmark</span>
+              <span><strong>c7i.16xlarge</strong></span>
+            </div>
+            <div class="hero-metric-row">
+              <span>Throughput</span>
+              <span><strong>9.07M ops/s</strong> (4.5× Redis)</span>
+            </div>
+            <div class="hero-metric-row">
+              <span>Bandwidth</span>
+              <span><strong>1.58&nbsp;GB/s</strong> (4.7× Redis)</span>
+            </div>
+            <div class="hero-metric-row">
+              <span>Latency p99</span>
+              <span><strong>1.21&nbsp;ms</strong></span>
+            </div>
+            <p class="hero-note">
+              Benchmarks are single-instance comparisons vs Redis and Dragonfly using
+              <code>memtier_benchmark</code>. For full numbers and methodology, see
+              <a href="benchmarks.html">Benchmarks</a>.
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <header class="section-header">
+            <p class="section-kicker">Why Redistill</p>
+            <h2 class="section-title">Performance-first, drop-in compatible with Redis clients.</h2>
+            <p class="section-subtitle">
+              Designed as a distilled version of Redis focused on high-performance key-value workloads, Redistill
+              eliminates persistence overhead while keeping the parts you rely on every day.
+            </p>
+          </header>
+          <div class="grid-3">
+            <article class="card">
+              <p class="card-tag">High-performance KV</p>
+              <h3 class="card-title">Fastest single-instance KV database</h3>
+              <p class="card-body">
+                Multi-threaded architecture, lock-free reads with DashMap, zero-copy buffers, and batched I/O combine to
+                deliver over 9M operations per second on a single instance.
+              </p>
+              <ul class="card-list">
+                <li>Multi-core utilization via Tokio runtime</li>
+                <li>2048–4096 shards for reduced contention</li>
+                <li>Optimized for pipelined workloads</li>
+              </ul>
+            </article>
+            <article class="card">
+              <p class="card-tag">Redis protocol</p>
+              <h3 class="card-title">Works with existing Redis clients</h3>
+              <p class="card-body">
+                Implements the Redis RESP protocol so you can point <code>redis-cli</code>, redis-py, ioredis, go-redis
+                and more at Redistill without changing your application code.
+              </p>
+              <ul class="card-list">
+                <li>Core commands: <code>SET</code>, <code>GET</code>, <code>MGET</code>, <code>HSET</code>, TTL, SCAN</li>
+                <li>INFO, AUTH and health monitoring</li>
+                <li>Optional snapshot persistence for warm restarts</li>
+              </ul>
+            </article>
+            <article class="card">
+              <p class="card-tag">Cost efficiency</p>
+              <h3 class="card-title">Fewer instances, lower infra cost</h3>
+              <p class="card-body">
+                With up to 4.5× Redis throughput per instance, you can support the same load with significantly fewer
+                servers, cutting infrastructure costs by 50–83% in typical scenarios.
+              </p>
+              <ul class="card-list">
+                <li>Great fit for read-heavy, cacheable data</li>
+                <li>Elastic scaling via client-side sharding</li>
+                <li>Configuration tuned for modern hardware</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="use-cases">
+        <div class="container">
+          <header class="section-header">
+            <p class="section-kicker" id="use-cases">Use cases</p>
+            <h2 class="section-title">Built for high-throughput, low-latency workloads.</h2>
+            <p class="section-subtitle">
+              Redistill shines as a high-speed cache and session store where data can be regenerated and latency
+              directly impacts user experience.
+            </p>
+          </header>
+          <div class="grid-2">
+            <article class="card">
+              <h3 class="card-title">Session storage</h3>
+              <p class="card-body">
+                Store and read millions of session keys per second with automatic TTL expiration and predictable
+                sub-millisecond latency.
+              </p>
+              <ul class="card-list">
+                <li>1M+ ops/sec for auth/session tokens</li>
+                <li>Simple key patterns like <code>session:&lt;id&gt;</code></li>
+                <li>Easy integration with popular web frameworks</li>
+              </ul>
+            </article>
+            <article class="card">
+              <h3 class="card-title">API response caching</h3>
+              <p class="card-body">
+                Offload hot database queries to an in-memory cache with 50–150× faster response times for repeated
+                requests.
+              </p>
+              <ul class="card-list">
+                <li>JSON/HTML responses in the 1–50KB range</li>
+                <li>Typical hit rates above 95%</li>
+                <li>Perfect for product catalogs and user profiles</li>
+              </ul>
+            </article>
+            <article class="card">
+              <h3 class="card-title">Rate limiting</h3>
+              <p class="card-body">
+                Use atomic counters with TTL to implement per-user, per-API or per-IP rate limits with minimal extra
+                latency on hot paths.
+              </p>
+              <ul class="card-list">
+                <li><code>INCR</code>/<code>EXPIRE</code>-based limits</li>
+                <li>Millions of counters with tiny memory footprint</li>
+                <li>Perfect fit for API gateways and edge proxies</li>
+              </ul>
+            </article>
+            <article class="card">
+              <h3 class="card-title">Real-time leaderboards & counters</h3>
+              <p class="card-body">
+                Track impressions, scores, and lightweight metrics where occasional data loss is acceptable but
+                performance is critical.
+              </p>
+              <ul class="card-list">
+                <li>Increments and hash fields for aggregates</li>
+                <li>TTL-based cleanup of stale keys</li>
+                <li>Rebuildable from primary databases</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="features">
+        <div class="container">
+          <header class="section-header">
+            <p class="section-kicker" id="features">Features</p>
+            <h2 class="section-title">Production-ready, focused feature set.</h2>
+            <p class="section-subtitle">
+              A lean, well-tuned subset of Redis designed for the vast majority of cache workloads, with security and
+              observability built in.
+            </p>
+          </header>
+          <div class="grid-3">
+            <article class="card">
+              <h3 class="card-title">Core data model</h3>
+              <p class="card-body">
+                High-performance string and hash storage with TTLs, counters, and non-blocking key scanning.
+              </p>
+              <div class="pill-row">
+                <span class="pill">SET / GET / MGET / MSET</span>
+                <span class="pill">INCR / DECR / INCRBY</span>
+                <span class="pill">HSET / HGET / HGETALL</span>
+                <span class="pill">TTL / PTTL / PERSIST</span>
+                <span class="pill">SCAN / DBSIZE</span>
+              </div>
+            </article>
+            <article class="card">
+              <h3 class="card-title">Security & reliability</h3>
+              <p class="card-body">
+                Password authentication, TLS termination, connection limits, and health checks so you can run Redistill
+                safely in production.
+              </p>
+              <div class="pill-row">
+                <span class="pill">AUTH</span>
+                <span class="pill">TLS/SSL</span>
+                <span class="pill">Max connections</span>
+                <span class="pill">Connection rate limiting</span>
+                <span class="pill">Graceful shutdown</span>
+              </div>
+            </article>
+            <article class="card">
+              <h3 class="card-title">Observation & tuning</h3>
+              <p class="card-body">
+                Rich configuration and metrics so you can dial in performance for your workload and monitor behavior
+                over time.
+              </p>
+              <div class="pill-row">
+                <span class="pill">INFO metrics</span>
+                <span class="pill">HTTP health endpoint</span>
+                <span class="pill">Eviction policies (LRU, random, S3-FIFO)</span>
+                <span class="pill">Snapshot persistence (optional)</span>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <header class="section-header">
+            <p class="section-kicker">Get started</p>
+            <h2 class="section-title">Install Redistill and run your first benchmark.</h2>
+            <p class="section-subtitle">
+              Use Docker, Homebrew, direct binaries, or build from source. Redistill speaks the Redis protocol, so your
+              existing Redis tools and clients just work.
+            </p>
+          </header>
+          <div class="grid-2">
+            <article class="card">
+              <h3 class="card-title">Install & run</h3>
+              <p class="card-body">
+                The fastest way to get going is Docker. You can also install via Homebrew on macOS or download
+                platform-specific binaries.
+              </p>
+              <pre><code class="language-bash">docker run -d --name redistill \
+  -p 6379:6379 shahidontech/redistill:latest
+
+redis-cli ping
+# PONG</code></pre>
+              <p class="card-body">
+                See the <a href="docs/quickstart.html">Quick Start</a> for Homebrew, Linux, Windows, and source builds.
+              </p>
+            </article>
+            <article class="card">
+              <h3 class="card-title">Benchmark</h3>
+              <p class="card-body">
+                Validate performance on your own hardware using <code>redis-benchmark</code> or
+                <code>memtier_benchmark</code>.
+              </p>
+              <pre><code class="language-bash">redis-benchmark -t set,get \
+  -n 1000000 -c 50 -P 16 -q</code></pre>
+              <p class="card-body">
+                For complete competitive results vs Redis and Dragonfly, visit the
+                <a href="benchmarks.html">Benchmarks</a> page.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>© <span id="year"></span> Redistill. MIT licensed, open source.</div>
+        <div class="footer-links">
+          <a href="https://github.com/redistill-io/redistill" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="docs/index.html">Docs</a>
+          <a href="benchmarks.html">Benchmarks</a>
+          <a href="roadmap.html">Roadmap</a>
+          <a href="contact.html">Contact</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js" defer></script>
+    <script src="assets/js/main.js"></script>
+  </body>
+</html>
+

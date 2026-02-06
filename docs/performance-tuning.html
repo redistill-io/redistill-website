@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Performance Tuning Guide – Redistill</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Guidance on tuning Redistill for maximum performance, including shard count, batch size, buffer pools, eviction policies, and workload-specific configurations."
+    />
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"
+    />
+  </head>
+  <body class="page">
+    <header class="site-header">
+      <div class="container">
+        <div class="nav">
+          <a href="../index.html" class="logo">
+            <span class="logo-mark"></span>
+            <span>Redistill</span>
+          </a>
+          <nav class="nav-links" aria-label="Main">
+            <a href="../index.html">Home</a>
+            <a href="index.html" class="active">Docs</a>
+            <a href="../benchmarks.html">Benchmarks</a>
+            <a href="../roadmap.html">Roadmap</a>
+            <a href="../contact.html">Contact</a>
+          </nav>
+          <button class="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+          <button class="nav-toggle" type="button" aria-label="Toggle navigation" onclick="toggleNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+        <nav id="nav-mobile" class="nav-links-mobile" aria-label="Mobile">
+          <a href="../index.html">Home</a>
+          <a href="index.html" class="active">Docs</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <div class="container">
+          <h1 class="page-title">Performance Tuning Guide</h1>
+          <p class="page-lead">
+            Redistill ships with sensible defaults, but you can unlock maximum throughput and consistently low latency by
+            tuning shards, batching, buffers, memory and network settings to your workload.
+          </p>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="container">
+          <div class="toc">
+            <div class="doc-search">
+              <label class="doc-search-label" for="doc-search-input">Search this page</label>
+              <input
+                id="doc-search-input"
+                class="doc-search-input"
+                type="search"
+                placeholder="Search headings (min. 2 characters)…"
+              />
+              <ul id="doc-search-results" class="doc-search-results"></ul>
+            </div>
+            <div class="toc-title">On this page</div>
+            <ul>
+              <li><a href="#defaults">Recommended defaults</a></li>
+              <li><a href="#shards">Shard count</a></li>
+              <li><a href="#batch">Batch size</a></li>
+              <li><a href="#buffers">Buffer pool</a></li>
+              <li><a href="#workloads">Workload-specific configs</a></li>
+              <li><a href="#memory">Memory planning &amp; eviction</a></li>
+              <li><a href="#benchmarking">Benchmarking &amp; troubleshooting</a></li>
+            </ul>
+          </div>
+
+          <h2 id="defaults">Recommended defaults</h2>
+          <p>
+            Based on extensive benchmarking (e.g. AWS c7i.8xlarge), a good starting point for most production deployments is:
+          </p>
+          <pre><code class="language-toml">[server]
+num_shards = 2048
+batch_size = 256
+buffer_size = 16384
+buffer_pool_size = 2048
+max_connections = 10000
+
+[performance]
+tcp_nodelay = true
+tcp_keepalive = 60
+
+[memory]
+max_memory = 0
+eviction_policy = "allkeys-lru"</code></pre>
+          <p>
+            This configuration achieved ≈6.87M GET ops/s and 2.74M SET ops/s in upstream benchmarks with sub-millisecond p50 latency.
+          </p>
+
+          <h2 id="shards">Shard count (<code>num_shards</code>)</h2>
+          <p>
+            <strong>Goal:</strong> balance parallelism and memory overhead. Each shard adds overhead but reduces contention.
+          </p>
+          <ul>
+            <li><strong>256 shards</strong> – lower memory, more contention; small datasets &amp; moderate concurrency.</li>
+            <li><strong>2048 shards</strong> – recommended balance for most workloads.</li>
+            <li><strong>4096 shards</strong> – maximum GET throughput; higher memory use.</li>
+          </ul>
+
+          <h2 id="batch">Batch size (<code>batch_size</code>)</h2>
+          <p>
+            <strong>Goal:</strong> match your client pipeline depth to minimize syscalls without adding latency.
+          </p>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Pipeline depth (-P)</th>
+                  <th>Recommended <code>batch_size</code></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1–16</td>
+                  <td>16</td>
+                </tr>
+                <tr>
+                  <td>16–64</td>
+                  <td>64–128</td>
+                </tr>
+                <tr>
+                  <td>64–128</td>
+                  <td>256</td>
+                </tr>
+                <tr>
+                  <td>&gt;128</td>
+                  <td>512</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2 id="buffers">Buffer pool size &amp; TCP</h2>
+          <p>
+            <strong>buffer_pool_size</strong> controls the number of reusable response buffers. Too small increases allocations; too large wastes memory.
+          </p>
+          <ul>
+            <li>Start with 2048 buffers and increase for very high connection counts (&gt;1000).</li>
+            <li>Enable <code>tcp_nodelay</code> for low-latency interactive workloads.</li>
+            <li>Use reasonable <code>tcp_keepalive</code> (60–300s) to keep long-lived connections healthy.</li>
+          </ul>
+
+          <h2 id="workloads">Workload-specific configurations</h2>
+          <h3>Read-heavy caching (&gt;90% GETs)</h3>
+          <pre><code class="language-toml">[server]
+num_shards = 4096
+batch_size = 256
+buffer_pool_size = 2048
+
+[memory]
+max_memory = 8589934592  # 8GB
+eviction_policy = "allkeys-lru"</code></pre>
+
+          <h3>Balanced 50/50 read-write</h3>
+          <pre><code class="language-toml">[server]
+num_shards = 2048
+batch_size = 256
+buffer_pool_size = 2048
+
+[memory]
+max_memory = 4294967296  # 4GB
+eviction_policy = "allkeys-lru"</code></pre>
+
+          <h3>Low-latency interactive</h3>
+          <pre><code class="language-toml">[server]
+num_shards = 2048
+batch_size = 16
+
+[performance]
+tcp_nodelay = true</code></pre>
+
+          <h2 id="memory">Memory planning &amp; eviction</h2>
+          <p>An approximate formula for total memory:</p>
+          <pre><code class="language-bash">Total ≈ num_keys × (key_size + value_size + 100B) + shard_overhead + buffer_pool</code></pre>
+          <p>Guidelines:</p>
+          <ul>
+            <li>Set <code>max_memory</code> to ≈70–80% of available RAM.</li>
+            <li>Use <code>allkeys-lru</code> for most caches; use <code>noeviction</code> when data loss is unacceptable and handle errors in your app.</li>
+            <li>Monitor <code>used_memory</code> and <code>evicted_keys</code> via <code>INFO</code> or the HTTP health endpoint.</li>
+          </ul>
+
+          <h2 id="benchmarking">Benchmarking &amp; troubleshooting</h2>
+          <h3>Quick benchmarking</h3>
+          <pre><code class="language-bash">redis-benchmark -h localhost -p 6379 \
+  -t set,get \
+  -n 2000000 \
+  -c 500 \
+  -P 128 \
+  --csv</code></pre>
+
+          <h3>Common issues</h3>
+          <ul>
+            <li><strong>High latency:</strong> ensure <code>tcp_nodelay=true</code>, reduce <code>batch_size</code>, and increase <code>num_shards</code>.</li>
+            <li><strong>Low throughput:</strong> increase <code>batch_size</code> and <code>num_shards</code>, and ensure clients are pipelining.</li>
+            <li><strong>Memory pressure:</strong> set <code>max_memory</code> and eviction policy; add TTLs.</li>
+          </ul>
+
+          <p>
+            For deeper system-level tuning (Linux kernel parameters, NUMA pinning, huge pages) and more detailed recipes,
+            see the full Performance Tuning Guide in the upstream docs.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>© <span id="year"></span> Redistill. MIT licensed, open source.</div>
+        <div class="footer-links">
+          <a href="https://github.com/redistill-io/redistill" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="index.html">Docs home</a>
+          <a href="../benchmarks.html">Benchmarks</a>
+          <a href="../roadmap.html">Roadmap</a>
+          <a href="../contact.html">Contact</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-toml.min.js" defer></script>
+    <script src="../assets/js/main.js"></script>
+  </body>
+</html>
+
